@@ -1,0 +1,1367 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: CCS.bt
+//   Authors: HydraBladeZ, 
+//   Version: 1.0
+//   Purpose: Parse CCS files
+//  Category: CyberConnect
+// File Mask: *.ccs
+//  ID Bytes: 46 53 43 43
+//   History: 1.0: Can read most chunk types
+//------------------------------------------------
+
+#define CCS
+
+#include "/../include.h"
+#include "CCS_Types.bt"
+
+local u32 ccsfColor = SetRandomBackColor();
+local u32 stringTableColor = SetRandomBackColor();
+local u32 stringTableFileColor = SetRandomBackColor();
+local u32 stringTableNameColor = SetRandomBackColor();
+local u32 setupColor = SetRandomBackColor();
+local u32 chunkSectionColor = SetRandomBackColor();
+local u32 ObjectSectionColor = SetRandomBackColor();
+local u32 TextureSectionColor = SetRandomBackColor();
+local u32 ClumpSectionColor = SetRandomBackColor();
+local u32 ExternalSectionColor = SetRandomBackColor();
+local u32 ColorPaletteSectionColor = SetRandomBackColor();
+local u32 ModelSectionColor = SetRandomBackColor();
+local u32 MaterialSectionColor = SetRandomBackColor();
+local u32 AnimationSectionColor = SetRandomBackColor();
+local u32 BboxSectionColor = SetRandomBackColor();
+local u32 HitSectionColor = SetRandomBackColor();
+local u32 AnimationReferenceColor = SetRandomBackColor();
+local u32 DynamicsColor = 0x000000;
+
+LittleEndian();
+
+
+
+
+//CCS File
+typedef struct
+{   
+    SetBackColor( ccsfColor );
+
+    u16 DataType;
+    u16 Signature;
+    u32 DataSize;
+    
+    char Magic[4];
+    Assert( Magic == "CCSF" );
+    char FileName[32];
+    
+    u32 Version <format = hex>;
+    u32 TotalChunkCount;
+    u32 Unk;
+    u32 Padding;
+    //Assert(Padding == 0);
+
+    struct TStringTable StringTable;
+    struct TSetup Setup;
+    
+    struct TChunkTable CCSChunk;
+
+} TCCSF <optimize=false>;
+
+
+
+// String Table
+typedef struct
+{
+    SetBackColor( stringTableColor );
+    
+    u16 DataType;
+    u16 Signature;
+    u32 DataSize;
+    u32 FilePathCount;
+    u32 NameCount;
+        
+    SetBackColor( stringTableFileColor );
+    struct {struct TString FilePaths[FilePathCount]; } FilePaths;
+
+    SetBackColor( stringTableNameColor );
+    struct {struct ChunkNames ChunkName[NameCount]; } Names;
+    
+} TStringTable <optimize=false>;
+
+//Null
+typedef struct
+{
+    SetBackColor( setupColor );
+    u32 DataType;
+    u32 DataSize;
+
+} TSetup <optimize=false>;
+
+
+// Chunk Table
+
+typedef struct
+{
+    SetBackColor( chunkSectionColor );
+    while (!FEof())
+    struct TChunk Chunk;
+
+} TChunkTable;
+
+
+
+// Path String Structure
+typedef struct
+{
+    char Data[32];
+
+} TString <optimize=false, read=ReadTString>;
+
+//Names
+typedef struct
+{
+    char Data[30];
+    ushort PathIndex;
+}ChunkNames <optimize=false, read=Data>;
+
+//Object Chunk
+typedef struct
+{   
+    SetBackColor( ObjectSectionColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 ParentObjectID <read=ReadChunkNameIndex>;
+    u32 ModelID <read=ReadChunkNameIndex>;
+    u32 ShadowID <read=ReadChunkNameIndex>;
+
+    local u32 CurVersion = CCSF.Version;
+    if (CurVersion > 0x120)
+    {
+        u32 Extra <read=ReadChunkNameIndex>;
+    }
+
+}OBJ;
+
+//Material Chunk
+typedef struct
+{   
+    SetBackColor( MaterialSectionColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 TextureIndex <read=ReadChunkNameIndex>;
+    float Alpha;
+    if (CCSF.Version > 0x120)
+    {
+        float OffsetX;
+        float OffsetY;
+        u8 data[(DataSize * 4) - 0x14];
+    }
+    else
+    {
+        u16 Offset1;
+        u16 Offset2;
+        u8 data[DataSize * 4 - 0x10];
+    }
+    
+
+}MAT;
+
+//Texture Chunk
+typedef struct
+{
+    SetBackColor( TextureSectionColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 ClutID <read=ReadChunkNameIndex>;
+    u32 BlitGroupID <read=ReadChunkNameIndex>;
+    u8 TextureFlags;
+    TextureTypes TextureType;
+    u8 MipMapsCount;
+    u8 Unk1;
+    u8 Width;
+    u8 Height;
+    u16 Unk2;
+    local u32 CurVersion = CCSF.Version;
+    local u8 NonP2;
+    
+    
+    if (CurVersion < 0x120)
+    {
+        local int ActualWidth = 1 << Width;
+        local int ActualHeight = 1 << Height;
+        u32 Unk3;
+    }
+    else if (Width == 0xff || Height == 0xff)
+    {
+        u16 TexWidth;
+        u16 TexHeight;
+    }
+    else if (TextureType == 0x87|| TextureType == 0x89)
+    {
+        FSkip(0x10);
+        u16 TexWidth;
+        u16 TexHeight;
+        FSkip(0x14);
+    }
+    else
+    {
+        u32 Unk4;
+    }             
+    
+    u32 TextureDataSize;
+    
+    if (TextureType == 0x87|| TextureType == 0x89)
+    {
+        local u32 TexDataSize = TextureDataSize - 0x40;
+        FSkip(0x0C);
+        char TextureName[16];
+    }
+    else
+    {
+        local u32 TexDataSize = TextureDataSize << 2;
+    }
+    
+    u8 Pixels[TexDataSize];
+
+}TEX;
+
+//Color Palette Chunk
+typedef struct
+{   
+    SetBackColor( ColorPaletteSectionColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 BlitGroup;
+    FSkip(8);
+    u32 ColorCount;
+    local int i;
+
+    struct
+        {
+            u8 B;
+            u8 G;
+            u8 R;
+            u8 A;
+            
+        }Color[ColorCount];
+
+}CLT;
+
+//Model Chunk
+typedef struct
+{   
+    SetBackColor( ModelSectionColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    f32 VertexScale;
+    u8 ModelType;
+    u8 MeshFlags;
+    u16 MeshCount;
+    u8 SourceFactor;
+    u8 DestinationFactor;
+    s16 UnkFlags;
+    u32 LookupCount;
+    local u32 CurVersion = CCSF.Version;
+    if (CurVersion > 0x110)
+    {
+        struct
+        {
+            u8 R;
+            u8 G;
+            u8 B;
+            u8 A;
+   
+        }OutlineColor;
+        float OutlineThickness;
+    }
+    if (MeshCount > 0)
+    {   //Rigid models
+        if (ModelType < Deformable)
+        {
+            local int m;
+            for (m = 0; m < MeshCount; m++)
+            {
+                struct
+                {
+                    u32 ParentID <read=ReadChunkNameIndex>;
+                    u32 MatTexID <read=ReadChunkNameIndex>;
+                    u32 VertexCount;
+                    struct
+                    {
+                        s16 X;
+                        s16 Y;
+                        s16 Z;
+                    }VertexPositions[VertexCount];
+
+                    if ((FTell() % 4) == 2)
+                    {
+                        u16 Padding;
+                    }
+                    struct
+                    {
+
+                        s8 vnX;
+                        s8 vnY;
+                        s8 vnZ;
+
+                        u8 triFlag;
+                    }VertsNormals[VertexCount];
+                    
+                    local int NoColorFlag = (MeshFlags & 2) != 2;
+                    if(NoColorFlag && ModelType < 4)
+                    {
+                        struct
+                        {
+                            u8 R;
+                            u8 G;
+                            u8 B;
+                            u8 A;
+                        }VertexColors[VertexCount];
+                    }
+                    if (MeshFlags != 6 && MeshFlags != 4)
+                    {
+                        struct
+                        {
+                            if(CCSF.Version >= 0x125)
+					        {
+						        u32 U;
+                                u32 V;
+					        }
+					        else
+					        {
+                                u16 U;
+                                u16 V;					            
+                            }
+                        }UVCoords[VertexCount] <optimize = true>;
+                    }
+                }Mesh;
+            }
+        }
+        //deformable/morphable/rigid
+        //there are some 0xEE bytes, there might be used for aligning
+        //each section has 4 unk bytes and u32 count followed by 4 padding bytes
+        //first section 2 bytes 
+        //second section 4 bytes
+        //third section 1 byte
+        //fourth section is 4 bytes
+        //fifth section is 8 bytes
+        //sixth section is 3 bytes
+        //seventh section is 4
+        
+        else if (ModelType == 6)
+        {
+            if (CCSF.Version > 0x111)
+            {
+            u8 LookupList[LookupCount]<read=ReadChunkNameLookup> ;
+            }
+            if ( (FTell() % 4) != 0)
+            {
+                local u32 PadSize = 4 - (FTell() % 4);
+                FSkip(PadSize);
+            }
+            u32 MatTexID <read=ReadChunkNameIndex>;
+            uint SectionCount;
+            local int alignsize;
+            struct{
+                byte idk ;
+                byte idk2 ;
+                byte idk3;
+                byte idk4;
+                uint SomethingCount;
+                float VertexScale;
+                if (idk2 == 8)
+                {
+                    ushort data[SomethingCount];
+                }
+                else if (idk2 == 0)
+                {
+                    struct
+                    {
+                        byte X <read= (this / 64.0)>;
+                        byte Y <read= (this / 64.0)>;
+                        byte Z <read= (this / 64.0)>;
+                    }data[SomethingCount];
+                }
+                else if (idk2 == 1)
+                {
+                    struct{
+                        short U <read= (this / 256.0)>;
+                        short V <read= (this / 256.0)>;
+                    }data[SomethingCount];
+                }
+                else if (idk2 == 7)
+                {
+                    byte data[SomethingCount];
+                }
+                else if (idk2 == 32)
+                {
+                    struct{
+                        short X <read = ((this / 16.0) / ((parentof(parentof(this)).VertexScale) / 256.0))>;
+                        short Y <read = ((this / 16.0) / ((parentof(parentof(this)).VertexScale) / 256.0))>;
+                        short Z <read = ((this / 16.0) / ((parentof(parentof(this)).VertexScale) / 256.0))>;
+                        short Unknown;
+                    }data[SomethingCount];
+                }
+                else if (idk2 == 33)
+                {
+                    ushort data[SomethingCount];
+                }
+                alignsize = (sizeof(this.data)) % 4;
+            
+                if (alignsize != 0)
+                {
+                    Printf("ALIGNING\n");
+                    byte align[4 - alignsize];
+                }
+            }Section[SectionCount] <optimize = false>;
+        }
+        //Deformable models
+        else if (ModelType & 4)
+        {
+            if (CurVersion > 0x111)
+            {
+                u8 LookupList[LookupCount] <read=ReadChunkNameLookup>;
+            }
+            if ((FTell() % 4) != 0)
+            {
+                local u32 PadSize = 4 - (FTell() % 4);
+                FSkip(PadSize);
+            }
+            
+            local int m, i, v;
+            for (m = 0; m < MeshCount; m++)
+            {
+                struct
+                {
+                    u32 MatTexID <read=ReadChunkNameIndex>;
+                    u32 VertexCount;
+                    u32 Unk;
+                    u32 ParentID; // from lookup list
+        
+                    struct
+                    {
+                        s16 X;
+                        s16 Y;
+                        s16 Z;
+                    } VertexPositions[VertexCount];
+        
+                    if ((FTell() % 4) == 2)
+                    {
+                        u16 Padding;
+                    }
+        
+                    struct
+                    {
+                        u8 vnX;
+                        u8 vnY;
+                        u8 vnZ;
+                        u8 triFlag;
+                    } VertsNormals[VertexCount];
+        
+                    struct
+                    {
+                        if (CCSF.Version >= 0x125)
+                        {
+                            u32 U;
+                            u32 V;
+                        }
+                        else
+                        {
+                            u16 U;
+                            u16 V;
+                        }
+                    } UVCoords[VertexCount] <optimize = true>;
+                } Mesh;
+                
+                if (m+2 >= MeshCount)
+                {
+                    break;
+                }
+            }
+            
+            if (LookupCount > 1)
+            {
+                struct
+                {
+                    u32 MatTexID <read=ReadChunkNameIndex>;
+                    u32 VertexCount;
+                    u32 DeformableVerts;
+            
+                    if (CCSF.Version < 0x125)
+                    {
+                        local int t;
+            
+                        struct
+                        {
+                            s16 X;
+                            s16 Y;
+                            s16 Z;
+                            u16 Params;
+                            local int dualFlag = ((Params >> 9) & 0x1) == 0;
+            
+                            if (dualFlag)
+                            {
+                                s16 X2;
+                                s16 Y2;
+                                s16 Z2;
+                                u16 Params2;
+                            }
+                        } VertexPosition[VertexCount] <optimize = false>;
+            
+                        if ((FTell() % 4) == 2)
+                        {
+                            u16 Padding;
+                        }
+            
+                        struct
+                        {
+                            u8 vnX;
+                            u8 vnY;
+                            u8 vnZ;
+                            u8 triFlag;
+                        } VertsNormals[DeformableVerts];
+            
+                        struct
+                        {
+                            if (CCSF.Version >= 0x125)
+                            {
+                                u32 U;
+                                u32 V;
+                            }
+                            else
+                            {
+                                u16 U;
+                                u16 V;
+                            }
+                        } UVCoords[VertexCount] <optimize = true>;
+                    }
+                    else if (ModelType == 6)
+                    {
+                        if (CurVersion > 0x111)
+                        {
+                            u8 LookupList[LookupCount] <read=ReadChunkNameLookup>;
+                        }
+                        if ((FTell() % 4) != 0)
+                        {
+                            local u32 PadSize = 4 - (FTell() % 4);
+                            FSkip(PadSize);
+                        }
+                    }
+                    else
+                    {
+                        // GEN3
+                        struct
+                        {
+                            s16 X;
+                            s16 Y;
+                            s16 Z;
+                            u16 Weight;
+                            u16 StopBit;
+                            u16 BoneID;
+                        } VertexPositions[DeformableVerts];
+            
+                        if ((FTell() % 4) == 2)
+                        {
+                            u16 Padding;
+                        }
+            
+                        struct
+                        {
+                            u8 vnX;
+                            u8 vnY;
+                            u8 vnZ;
+                            u8 triFlag;
+                        } VertsNormals[DeformableVerts];
+            
+                        struct
+                        {
+                            u32 U;
+                            u32 V;
+                        } UVCoords[VertexCount];
+                    }
+                } DeformableMesh;
+            }
+        }
+        //Shadow Models
+        else if (ModelType == ShadowMesh)
+        {   
+            local int i;
+            for (i = 0; i < MeshCount; i++)
+            {
+                struct
+                {
+                    u32 VertexCount;
+                    u32 TriangleVerticesCount;
+
+                    struct
+                    {
+                        s16 X;
+                        s16 Y;
+                        s16 Z;
+                        
+                    }VertsPositions[VertexCount]; 
+                    if ( (FTell() % 4) == 2) 
+                    {
+                        u16 Padding;
+                    }
+                    struct
+                    {
+
+                        s32 ID1;
+                        s32 ID2;
+                        s32 ID3;
+
+                    }Triangles[TriangleVerticesCount / 3];
+
+                }Mesh;
+            }
+        }
+    }
+}MDL <read = ReadModelType(ModelType)>;
+
+
+//Clump Chunk
+typedef struct
+{   
+    SetBackColor( ClumpSectionColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 BoneCount;
+    local int i;
+
+    u32 BoneIndex[BoneCount] <read=ReadChunkNameIndex>;
+    
+    if (CCSF.Version > 0x100)
+    {        
+        struct
+        {
+            float X_Position;
+            float Y_Position;
+            float Z_Position;
+            
+            float X_Rotation;
+            float Y_Rotation;
+            float Z_Rotation;
+            
+            float X_Scale;
+            float Y_Scale;
+            float Z_Scale;
+        }BoneCoords[BoneCount] ;
+    }
+    
+}CMP;
+
+typedef struct
+{   
+    SetBackColor( DynamicsColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    short SpringBoneCount;
+    short CollisionCount;
+    
+    struct{
+        int BoneIndex;
+        float X ;
+        float Y;
+        float Z;
+    }SpringBones[SpringBoneCount] <optimize = false>;
+
+    struct{
+        int BoneIndex;
+        float PosX;
+        float PosY;
+        float PosZ;
+        float RotX;
+        float RotY;
+        float RotZ;
+        float ScaleX;
+        float ScaleY;
+        float ScaleZ;
+        
+    }Collisions[CollisionCount];
+
+}DYN;
+
+//External Object Chunk
+typedef struct
+{   
+    SetBackColor( ExternalSectionColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 ReferencedParentID <read = ReadChunkNameIndex>;
+    u32 ReferencedObjectID <read = ReadChunkNameIndex>;
+}EXT;
+
+//Animation Chunk
+typedef struct
+{   
+    SetBackColor( AnimationSectionColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    s32 FrameCount;
+    u32 FramesSectionSize; //Multiplied by 4
+    
+    local int CurrentFrame = 0;
+    local int StartPos = FTell();
+    local int EndPos = StartPos + (FramesSectionSize * 4);
+    local int i;
+    
+    while (FTell() < EndPos)
+    {
+        struct
+        {
+            AnimationTypes Type;
+            FSkip(2);
+            u32 Size;
+            
+            switch (Type)
+            {
+                case ObjectController:
+                    struct
+                    {
+                        u32 ObjectID <read=ReadChunkNameIndex>;
+                        u16 EntryType;
+                        FSkip(2);
+                        if (EntryType==18){
+                        struct{
+                            u16 framePosCount;
+                            FSkip(2);
+                                struct{
+                                    u32 Frame;
+                                    float Pos_X;
+                                    float Pos_Y;
+                                    float Pos_Z;
+                                }Position[framePosCount];
+                            u16 frameRotCount;
+                            FSkip(2);
+                                struct{
+                                    u32 Frame;
+                                    s16 Rot_W;
+                                    s16 Rot_X;
+                                    s16 Rot_Y;
+                                    s16 Rot_Z;
+                                    s16 unk1;
+                                    s16 unk2;
+                                }Rotation[frameRotCount];
+                            }Frames;
+                        }
+                        else if (EntryType == 33){
+                            struct{
+                                float Pos_X;
+                                float Pos_Y;
+                                float Pos_Z;
+                            }Position;
+                            struct{
+                                u32 RotationCount;
+                                struct{
+                                    u32 Frame;
+                                    float Rot_W;
+                                    float Rot_X;
+                                    float Rot_Y;
+                                    float Rot_Z;
+                                }Frame[RotationCount];
+                            }Rotation;
+                            
+                        }
+                        else if (EntryType == 34){
+                            struct{
+                                u32 PositionCount;
+                                struct{
+                                    u32 Frame;
+                                    float Pos_X;
+                                    float Pos_Y;
+                                    float Pos_Z;
+                                }Frame[PositionCount];
+                            }Position;
+                            struct{
+                                u32 RotationCount;
+                                struct{
+                                    u32 Frame;
+                                    float Rot_W;
+                                    float Rot_X;
+                                    float Rot_Y;
+                                    float Rot_Z;
+                                }Frame[RotationCount];
+                            }Rotation;
+                            
+                        }
+                        else if (EntryType == 8){
+                            struct{
+                                float Rot_X;
+                                float Rot_Y;
+                                float Rot_Z;
+                            }Rotation;
+                            
+                        }
+                        else if (EntryType == 9){
+                            struct{
+                                float Pos_X;
+                                float Pos_Y;
+                                float Pos_Z;
+                            }Position;
+                            struct{
+                                float Rot_X;
+                                float Rot_Y;
+                                float Rot_Z;
+                            }Rotation;
+                        }
+                        else if (EntryType == 10){
+                            u32 PosCount;
+                            struct{
+                                s32 Frame;
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Position1Rot[PosCount];
+                            float RotZYX[3];
+                        }
+                        else if (EntryType == 17)
+                        {   
+                            f32 floats[3];
+                            u32 Count;
+                            struct{
+                                s32 Frame;
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Positions[Count];
+                        }
+                        else if (EntryType == 73)
+                        {   
+                            struct{
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Position;
+                            struct{
+                                float Rot_Z;
+                                float Rot_Y;
+                                float Rot_X;
+                            }Rotation;
+                            struct{
+                                float Scale_Z;
+                                float Scale_Y;
+                                float Scale_X;
+                            }Scale;
+                        }
+                        else if (EntryType == 74)
+                        {   
+                            u32 FrameCount;
+                            struct{
+                                s32 Frame;
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Position[FrameCount];
+                            struct{
+                                float Rot_Z;
+                                float Rot_Y;
+                                float Rot_X;
+                            }Rotation;
+                            struct{
+                                float Scale_Z;
+                                float Scale_Y;
+                                float Scale_X;
+                            }Scale;
+                        }
+                        else if (EntryType == 81)
+                        {   
+                            struct{
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Position
+;
+                            u32 FrameCount;
+                            struct{
+                                s32 Frame;
+                                float Rot_Z;
+                                float Rot_Y;
+                                float Rot_X;
+                            }Rotation[FrameCount];
+                            struct{
+                                float Scale_Z;
+                                float Scale_Y;
+                                float Scale_X;
+                            }Scale;
+                        }
+                        else if (EntryType == 585)
+                        {   
+                            struct{
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Position;
+                            struct{
+                                float Rot_Z;
+                                float Rot_Y;
+                                float Rot_X;
+                            }Rotation;
+                            struct{
+                                float Scale_Z;
+                                float Scale_Y;
+                                float Scale_X;
+                            }Scale;
+                            float Opacity;
+                        }
+                        else if (EntryType == 1033)
+                        {   
+                            f32 Rotation[6];
+                            u32 ScaleCount;
+                            struct{
+                                s32 Frame;
+                                f32 Scale;
+                            }Scale[ScaleCount];
+                            
+                        }
+                        else if (EntryType == 1)
+                        {   
+                            f32 Position[3];
+                        }
+                        else if (EntryType == 129)
+                        {   
+                            f32 Position[3];
+                            u32 Count;
+                            struct{
+                                u32 Frame;
+                                float Z;
+                                float Y;
+                                float X;
+                            }Scale[Count];
+                        }
+                        else if (EntryType == 1152)
+                        {   
+                            u32 PosCount;
+                            struct{
+                                u32 Frame;
+                                float Z;
+                                float Y;
+                                float X;
+                            }Positions[PosCount];
+                            u32 ScaleCount;
+                            struct{
+                                u32 Frame;
+                                float XYZ;
+                            }Scale[ScaleCount];
+                        }
+                        else if (EntryType == 1153)
+                        {   
+                            struct{
+                                float Z;
+                                float Y;
+                                float X;
+                            }Rotation;
+                            u32 PosCount;
+                            struct{
+                                u32 Frame;
+                                float Z;
+                                float Y;
+                                float X;
+                            }Positions[PosCount];
+                            u32 ScaleCount;
+                            struct{
+                                u32 Frame;
+                                float XYZ;
+                            }Scale[ScaleCount];
+                        }
+                        else if (EntryType == 1161)
+                        {   
+                            f32 Unknown[6];
+                            u32 ScaleCount;
+                            struct{
+                                s32 Frame;
+                                f32 Z;
+                                f32 Y;
+                                f32 X;
+                                
+                            }Scale[ScaleCount];
+                            u32 OpacityCount;
+                            struct{
+                                s32 Frame;
+                                f32 Opacity;
+                            }Opacity[OpacityCount];
+                            
+                        }
+                        else if (EntryType == 1168)
+                        {   
+                            u32 RosCount;
+                            struct{
+                                u32 Frame;
+                                float Z;
+                                float Y;
+                                float X;
+                            }Rotation[RosCount];
+                            u32 PosCount;
+                            struct{
+                                u32 Frame;
+                                float Z;
+                                float Y;
+                                float X;
+                            }Position[PosCount];
+                            u32 ScaleCount;
+                            struct{
+                                u32 Frame;
+                                float XYZ;
+                            }Scale[ScaleCount];
+                        }
+                        else if (EntryType == 1170)
+                        {   
+                                u32 PosCount;
+                                struct{
+                                    u32 Frame;
+                                    float Z;
+                                    float Y;
+                                    float X;
+                                }Position[PosCount];
+                                u32 RotCount;
+                                struct{
+                                    u32 Frame;
+                                    float Z;
+                                    float Y;
+                                    float X;
+                                }Rotation[RotCount];
+                                u32 ScaleCount;
+                                struct{
+                                    u32 Frame;
+                                    float Z;
+                                    float Y;
+                                    float X;
+                                }Scale[ScaleCount];
+                                u32 OpacityCount;
+                                struct{
+                                    u32 Frame;
+                                    float Opacity;
+                                }Opacity[OpacityCount];
+                        }
+                        else
+                        {
+                            Printf(Str("Unknown Entry %d in chunk (%d), at (%d)\n", EntryType, ObjectID, FTell()));
+                            u8 Data[Size * 4 -8];
+                        }
+                    }ObjectController;
+                    break;
+    
+                case Frame:
+                struct
+                {
+                    s32 CurrentFrame;
+                }Frame;
+                break;
+                case MorpherFrame:
+                struct
+                {
+                    u32 Index <read= ReadChunkNameIndex>;
+                    u32 Count;
+                    struct
+                    {
+                        s32 Frame;
+                        f32 Value;
+                    }MorphFrame[Count];
+                    
+                }Morph;
+                break;
+                
+                default:
+                    struct
+                        {
+                            u8 Data [Size * 4];
+                        }SUnknown;
+                break;
+            }
+        }AnimationChunk <read = ReadAnmChunkType(Type)>;
+    }
+        
+}ANM;
+
+//Bounding Box Chunk
+typedef struct
+{   
+    SetBackColor( BboxSectionColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 ModelChunk <read=ReadChunkNameIndex>;
+    f32 BboxCoords[6];
+}BOX;
+
+//Dummy Position Chunk
+typedef struct
+{   
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    f32 Position[3];
+}DMY;
+
+//Dummy Position and Rotation Chunk
+typedef struct
+{   
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    f32 Position[3];
+    float Rotation[3];
+}DMY2;
+    
+//Hit Chunk     
+typedef struct
+{   
+    SetBackColor(HitSectionColor);
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 ModelChunkIndex <read=ReadChunkNameIndex>;
+    u32 HitMeshCount;
+    uint TotalVertexCount;
+    struct{
+            u32 VertexCount;
+            u32 HitParams;
+            struct{
+                struct{
+                    float X;
+                    float Y;
+                    float Z;
+                }Vertex[3] <optimize = false>;
+            }Triangles[VertexCount / 3] <optimize = false>;
+
+            struct{
+                struct{
+                    float X;
+                    float Y;
+                    float Z;
+                }Vertex[3] <optimize = false>;
+            }Triangles2[VertexCount / 3] <optimize = false>;
+    }HitMesh[HitMeshCount] <optimize = false>;
+}HIT;
+
+//Morph Chunk
+typedef struct
+{   
+    //SetBackColor( BboxSectionColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 TargetModel <read=ReadChunkNameIndex>;
+    local string TargetName = ReadChunkNameIndex(TargetModel);
+}MPH <read = TargetName>;
+
+//AnimationReference Chunk
+typedef struct
+{   
+    SetBackColor( AnimationReferenceColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 ParentObjectID <read=ReadChunkNameIndex>;
+    u32 ModelID <read=ReadChunkNameIndex>;
+    //Assert(ModelID == 0);
+    u32 LayerID <read=ReadChunkNameIndex>;
+    u32 Extra <read=ReadChunkNameIndex>;
+
+}ANMOBJ;
+
+//Layer Chunk
+typedef struct
+{
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u8 Data[(DataSize * 4) - 4];
+}LYR;
+
+typedef struct
+{   
+    SetBackColor( AnimationSectionColor );
+    local uint ChunkNameIndex = 0;
+    u32 FrameCount;
+
+    local int CurrentFrame = 0;
+
+    while (CurrentFrame != -1)
+    {
+        //Printf("Current Frame = %d\n", CurrentFrame);
+        struct{
+            AnimationTypes AnmChunkType;
+            FSkip(2);
+            switch (AnmChunkType)
+            {
+                case Dummy:
+                break;
+
+                case Frame:
+                    struct{
+                        u32 Size;
+                        s32 Frame;
+                    }FrameChunk;
+                    CurrentFrame = FrameChunk.Frame;
+                break;
+
+                default:
+                    struct{
+                    u32 Size;
+                    u8 Data[Size * 4];
+                    }AnmUnk;
+                break;
+            }
+        }AnimationChunk;
+    }
+        
+}STRM;
+
+//Unknown Chunk
+typedef struct
+{
+    local uint ChunkNameIndex = 0;
+    u8 Data[(DataSize * 4)];
+}UNK;
+
+// Chunk Structure
+typedef struct
+{   
+    DataTypes ChunkType;
+    u16 ChunkVersion;
+    u32 DataSize;
+    switch (ChunkType)
+    {
+        case Object:
+            struct OBJ Chunk;
+            break;
+        case AnimationReference:
+            struct ANMOBJ Chunk;
+            break;
+        case Material:
+            struct MAT Chunk;
+            break;
+        case Texture:
+            struct TEX Chunk;
+            break;
+        case ColorPalette:
+            struct CLT Chunk;
+            break;
+        case Model:
+            struct MDL Chunk;
+            break;
+        case Clump:
+            struct CMP Chunk;
+            break;
+        case Dynamics:
+            struct DYN Chunk;
+            break;
+        case External:
+            struct EXT Chunk;
+            break;
+        case Animation:
+            struct ANM Chunk;
+            break;
+        case Bounding_Box:
+            struct BOX Chunk;
+            break;
+        case Dummy_Position:
+            struct DMY Chunk;
+            break;
+        case Dummy_Position_Rotation:
+            struct DMY2 Chunk;
+            break;
+        case HitModel:
+            struct HIT Chunk;
+            break;
+        case Morpher:
+            struct MPH Chunk;
+            break;
+        case Layer:
+            struct LYR Chunk;
+            break;
+        case Stream:
+            struct STRM Chunk;
+            break;
+        case Frame:
+            //s32 Index;
+            break;
+        
+        default:
+            struct UNK Chunk;
+            break;
+    }
+    local string chunkReadString = ReadChunkNameIndex(Chunk.ChunkNameIndex);
+        
+  
+} TChunk <read= ReadChunkName>;
+
+
+
+string ReadTString(TString& value )
+{
+    return value.Data;
+}
+
+string ReadChunkNameIndex(u32& value )
+{
+    if (value > -1)
+    {
+    local string str = "";
+    local string Name = CCSF.StringTable.Names.ChunkName[value].Data;
+    //local string Name = "";
+    local int Index = value;
+    SPrintf(str, "%s (Index %d)", Name , Index);
+    return str;
+    }
+    else
+    {
+    return "EOF";
+    }
+}
+
+string ReadChunkNameSIndex(s32 & value )
+{
+    local string str = "";
+    local string Name = CCSF.StringTable.Names.ChunkName[value].Data;
+    local int Index = value;
+    SPrintf(str, "%s (Index %d)", Name , Index);
+}
+
+string ReadChunkNameLookup(u8 & value )
+{
+    return CCSF.StringTable.Names.ChunkName[value].Data;
+}
+
+string ReadChunkName(struct TChunk & value )
+{
+    return value.chunkReadString;
+}
+
+string ReadModelType(u8 & value)
+{
+    local string str = "";
+
+    if (value & 1){str += "Rigid | ";}
+    if (value & 2) {str += "Morphable | ";}
+    if (value & 4) {str += "Deformable | ";}
+    if (value & 8) {str += "Shadow";}
+    
+    return str;
+}
+
+string ReadAnmChunkType(AnimationTypes & value)
+{
+    local string str = "";
+
+    switch (value)
+    {
+        case 0xff01:
+            str = "Frame";
+        break;
+        
+        case 0x0101:
+            str = "ObjectKeyframe";
+        break;
+        
+        case 0x0102:
+            str = "ObjectController";
+        break;
+        
+        case 0x0108:
+            str = "Unknown";
+        break;
+        
+        case 0x0202:
+            str = "MaterialController";
+        break;
+        
+        case 0x0601:
+            str = "AmbientKeyframe";
+        break;
+        
+        case 0x0603:
+            str = "DirectionalLightController";
+        break;
+        
+        case 0x0609:
+            str = "OmniLightController";
+        break;
+        
+        case 0x1901:
+            str = "MorphKeyframe";
+        break;
+        
+    }
+    
+    return str;
+}
+
+TCCSF CCSF;

@@ -1,0 +1,103 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: CCS.bt
+//   Authors: HydraBladeZ, Dei
+//   Version: 0.01
+//   Purpose: Parse CCS files
+//  Category: 
+// File Mask: *.ccs
+//  ID Bytes: 46 53 43 43
+//   History: 
+//------------------------------------------------
+
+LittleEndian();
+
+enum <u16> DataTypes
+{
+    Header                  = 0x0001,
+    StringTable             = 0x0002,
+    Null                    = 0x0003,
+    Stream                  = 0x0005,
+    Object                  = 0x0100,
+    StreamObject            = 0x0101,
+    Material                = 0x0200,
+    Texture                 = 0x0300,
+    ColorPalette            = 0x0400,
+    Camera                  = 0x0500,
+    Light                   = 0x0600,
+    Animation               = 0x0700,
+    Model                   = 0x0800,
+    Clump                   = 0x0900,
+    External                = 0x0a00,
+    HitModel                = 0x0b00,
+    Bounding_Box            = 0x0c00,
+    Effect                  = 0x0e00,
+    Particle                = 0x0d00,
+    PartAnmCtrl             = 0x0d80,
+    PartGenerator           = 0x0d90,
+    Blit_Group              = 0x1000,
+    FrameBuffer_Page        = 0x1100,
+    FrameBuffer_Rect        = 0x1200,
+    Dummy_Position          = 0x1300,
+    Dummy_Position_Rotation = 0x1400,
+    Layer                   = 0x1700,
+    Shadow                  = 0x1800,
+    Morpher                 = 0x1900,
+    StreamChunk             = 0x1A00, //streamoutlineparam
+    StreamCelShadeParam     = 0x1B00,
+    StreamToneShadeParam    = 0x1C00,
+    StreamFSBlurParam       = 0x1D00,
+    Sprite2Tbl              = 0x1F00,
+    AnimationReference      = 0x2000, //obj2
+    PCM_Audio               = 0x2200,
+    Dynamics                = 0x2300,
+    Binary_Blob             = 0x2400,
+    Frame                   = 0xff01
+};
+
+
+enum <u8> ModelTypes
+{   
+    Rigid0                = 0x00,
+    Rigid                 = 0x01,
+    Morphable             = 0x02,
+    Deformable            = 0x04,
+    ShadowMesh            = 0x08,
+};
+
+enum <u8> TextureTypes
+{   
+    RGBA32 =0x00,
+    Indexed8 = 0x13,
+    Indexed4 = 0x14,
+    DXT1 = 0x87,
+    DXT5 = 0x89,
+};
+
+enum <u16> AnimationTypes
+{   
+    Dummy                           = 0x0001,
+    ObjectFrame                     = 0x0101,
+    ObjectController                = 0x0102,
+    NoteFrame                       = 0x0108,
+    MaterialFrame                   = 0x0201,
+    MaterialController              = 0x0202,
+    CameraFrame                     = 0x0502,
+    AmbientFrame                    = 0x0601,
+    DistantLightFrame               = 0x0602,
+    DirectionalLightController      = 0x0603,
+    DirectLightFrame                = 0x0604,
+    SpotLightFrame                  = 0x0606,
+    OmniLightFrame                  = 0x0608,
+    OmniLightController             = 0x0609,
+    ModelVertexFrame                = 0x0802,
+    ModelNormalFrame                = 0x0803,
+    ShadowFrame                     = 0x1801,
+    MorpherFrame                    = 0x1901,
+    CelShadeFrame                   = 0x1b01,
+    ToneShadeFrame                  = 0x1c01,
+    FSBlurFrame                     = 0x1d01,
+    PCMFrame                        = 0x2201,
+    TopFrame                        = -0xff
+};

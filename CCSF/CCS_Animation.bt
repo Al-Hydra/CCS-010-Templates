@@ -1,0 +1,568 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: CCS.bt
+//   Authors: HydraBladeZ
+//   Version: 0.01
+//   Purpose: Parse CCS files
+//  Category: 
+// File Mask: *.ccs
+//  ID Bytes: 46 53 43 43
+//   History: 
+//------------------------------------------------
+
+LittleEndian();
+
+//Animation Chunk
+typedef struct
+{   
+    SetBackColor( AnimationSectionColor );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    s32 FrameCount;
+    u32 FramesSectionSize; //Multiplied by 4
+    
+    local int CurrentFrame = 0;
+    local int StartPos = FTell();
+    local int EndPos = StartPos + (FramesSectionSize * 4);
+    local int i;
+    
+    while (FTell() < EndPos)
+    {
+        struct
+        {
+            AnimationTypes Type;
+            FSkip(2);
+            u32 Size;
+            
+            switch (Type)
+            {
+                case ObjectController:
+                    struct
+                    {
+                        u32 ObjectID <read=ReadChunkNameIndex>;
+                        u16 EntryType;
+                        u16 Unk;
+
+                        AnmCtrlFVec3(EntryType);
+
+                        AnmCtrlRot(EntryType >> 3);
+                        
+                        AnmCtrlFVec3(EntryType >> 6);
+                        
+                        AnmCtrlFloat(EntryType >> 9);
+
+                    }ObjectController;
+                    break;
+    
+                case Frame:
+                    struct
+                    {
+                        s32 CurrentFrame;
+                    }Frame;
+                break;
+
+                case MorpherFrame:
+                    struct
+                    {
+                        u32 Index <read= ReadChunkNameIndex>;
+                        u32 Count;
+                        struct
+                        {
+                            s32 Frame;
+                            f32 Value;
+                        }MorphFrame[Count];
+                        
+                    }Morph;
+                break;
+
+                case NoteFrame:
+                    struct
+                    {
+                        u32 Index <read= ReadChunkNameIndex>;
+                        u32 Unk1;
+                        u32 Unk2;
+                        
+                    }NoteFrame;
+                break;
+                
+                default:
+                    Printf("Unknown Animation (%x) at %x\n", Type, FTell());
+                    struct
+                        {
+                            u8 Data [Size * 4];
+                        }SUnknown;
+                break;
+            }
+        }AnimationChunk <read = ReadAnmChunkType(Type)>;
+    }
+        
+}ANM;
+
+
+void AnmCtrlFVec3(u16 EntryType)
+{
+    if ((EntryType & 7) == 2)
+    {
+        u32 FrameCount;
+        
+        struct{
+            u32 Frame;
+            struct Vector3 Position;
+        }Positions[FrameCount];
+        
+    }
+    else if ((EntryType & 7) == 1)
+    {
+        struct Vector3 Position;
+    }
+}
+
+
+void AnmCtrlRot(u16 EntryType)
+{
+    if ((EntryType & 7) == 2)
+    {
+        u32 FrameCount;
+        u32 Frame;
+
+        struct RotEuler Rotation;
+
+        /*local uint uVar5 = Frame << 8;
+        local uint uVar6 = (uVar5 != 0);
+        local uint uVar4 = FrameCount - 1 + uVar6;
+
+        for (uVar6; uVar6 < uVar4; uVar6 = uVar6 + 1)
+        {
+            u32 Frame;
+            struct RotEuler Rotation;
+            
+        }*/
+
+        local int i = 1;
+        if (i < FrameCount)
+        {
+            do
+            {
+                u32 Frame;
+                struct RotEuler Rotation;
+
+                i++;
+            } while (i < FrameCount);
+        }
+    }
+    if ((EntryType & 7) == 4)
+    {
+        u32 FrameCount;
+        u32 Frame;
+
+        struct RotQuaternion Rotation;
+
+        local uint uVar5 = Frame << 8;
+        local uint uVar6 = (uVar5 != 0);
+        local uint uVar4 = FrameCount - 1 + uVar6;
+
+        for (uVar6; uVar6 < uVar4; uVar6 = uVar6 + 1)
+        {
+            u32 Frame;
+            struct RotQuaternion Rotation;
+            
+        }
+    }
+    else if ((EntryType & 7) == 1)
+    {
+        struct RotEuler Rotation;
+    }
+}
+
+void AnmCtrlClr(u16 EntryType)
+{
+    if ((EntryType & 7) == 2)
+    {
+        u32 FrameCount;
+        u32 Frame;
+
+        struct ColorRGBA Color;
+                
+        local int i = 1;
+        if (i < FrameCount)
+        {
+            do
+            {
+                u32 Frame;
+                struct ColorRGBA Color;
+
+                i++;
+            } while (i < FrameCount);
+        }
+    }
+    else if ((EntryType & 7) == 1)
+    {
+        struct ColorRGBA Color;
+    }
+}
+
+void AnmCtrlFloat(u16 EntryType)
+{
+    if ((EntryType & 7) == 2)
+    {
+        u32 FrameCount;
+        u32 Frame;
+        
+        u32 Opacity;
+        
+        
+        local int i = 1;
+        if (1 < FrameCount)
+        {
+            do
+            {
+                u32 Frame;
+                f32 Opacity;
+
+                i++;
+            } while (i < FrameCount);
+        }
+    }
+    else if ((EntryType & 7) == 1)
+    {
+        f32 Opacity;
+    }
+}
+
+typedef struct{
+    float PosX;
+    float PosY;
+    float PosZ;
+}Vector3;
+
+typedef struct{
+    float RotX;
+    float RotY;
+    float RotZ;
+}RotEuler;
+
+typedef struct{
+    float RotX;
+    float RotY;
+    float RotZ;
+    float RotW;
+}RotQuaternion;
+
+typedef struct{
+    ubyte R;
+    ubyte G;
+    ubyte B;
+    ubyte A;
+}ColorRGBA;
+
+/*
+if (EntryType==18){
+                        struct{
+                            u16 framePosCount;
+                            FSkip(2);
+                                struct{
+                                    u32 Frame;
+                                    float Pos_X;
+                                    float Pos_Y;
+                                    float Pos_Z;
+                                }Position[framePosCount];
+                            u16 frameRotCount;
+                            FSkip(2);
+                                struct{
+                                    u32 Frame;
+                                    float RotX;
+                                    float RotY;
+                                    float RotZ;
+                                    
+                                }Rotation[frameRotCount];
+                            }Frames;
+                        }
+                        else if (EntryType == 33){
+                            struct{
+                                float Pos_X;
+                                float Pos_Y;
+                                float Pos_Z;
+                            }Position;
+                            struct{
+                                u32 RotationCount;
+                                struct{
+                                    u32 Frame;
+                                    float Rot_W;
+                                    float Rot_X;
+                                    float Rot_Y;
+                                    float Rot_Z;
+                                }Frame[RotationCount];
+                            }Rotation;
+                            
+                        }
+                        else if (EntryType == 34){
+                            struct{
+                                u32 PositionCount;
+                                struct{
+                                    u32 Frame;
+                                    float Pos_X;
+                                    float Pos_Y;
+                                    float Pos_Z;
+                                }Frame[PositionCount];
+                            }Position;
+                            struct{
+                                u32 RotationCount;
+                                struct{
+                                    u32 Frame;
+                                    float Rot_W;
+                                    float Rot_X;
+                                    float Rot_Y;
+                                    float Rot_Z;
+                                }Frame[RotationCount];
+                            }Rotation;
+                            
+                        }
+                        else if (EntryType == 8){
+                            struct{
+                                float Rot_X;
+                                float Rot_Y;
+                                float Rot_Z;
+                            }Rotation;
+                            
+                        }
+                        else if (EntryType == 9){
+                            struct{
+                                float Pos_X;
+                                float Pos_Y;
+                                float Pos_Z;
+                            }Position;
+                            struct{
+                                float Rot_X;
+                                float Rot_Y;
+                                float Rot_Z;
+                            }Rotation;
+                        }
+                        else if (EntryType == 10){
+                            u32 PosCount;
+                            struct{
+                                s32 Frame;
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Position1Rot[PosCount];
+                            float RotZYX[3];
+                        }
+                        else if (EntryType == 17)
+                        {   
+                            f32 floats[3];
+                            u32 Count;
+                            struct{
+                                s32 Frame;
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Positions[Count];
+                        }
+                        else if (EntryType == 73)
+                        {   
+                            struct{
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Position;
+                            struct{
+                                float Rot_Z;
+                                float Rot_Y;
+                                float Rot_X;
+                            }Rotation;
+                            struct{
+                                float Scale_Z;
+                                float Scale_Y;
+                                float Scale_X;
+                            }Scale;
+                        }
+                        else if (EntryType == 74)
+                        {   
+                            u32 FrameCount;
+                            struct{
+                                s32 Frame;
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Position[FrameCount];
+                            struct{
+                                float Rot_Z;
+                                float Rot_Y;
+                                float Rot_X;
+                            }Rotation;
+                            struct{
+                                float Scale_Z;
+                                float Scale_Y;
+                                float Scale_X;
+                            }Scale;
+                        }
+                        else if (EntryType == 81)
+                        {   
+                            struct{
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Position
+;
+                            u32 FrameCount;
+                            struct{
+                                s32 Frame;
+                                float Rot_Z;
+                                float Rot_Y;
+                                float Rot_X;
+                            }Rotation[FrameCount];
+                            struct{
+                                float Scale_Z;
+                                float Scale_Y;
+                                float Scale_X;
+                            }Scale;
+                        }
+                        else if (EntryType == 585)
+                        {   
+                            struct{
+                                float Pos_Z;
+                                float Pos_Y;
+                                float Pos_X;
+                            }Position;
+                            struct{
+                                float Rot_Z;
+                                float Rot_Y;
+                                float Rot_X;
+                            }Rotation;
+                            struct{
+                                float Scale_Z;
+                                float Scale_Y;
+                                float Scale_X;
+                            }Scale;
+                            float Opacity;
+                        }
+                        else if (EntryType == 1033)
+                        {   
+                            f32 Rotation[6];
+                            u32 ScaleCount;
+                            struct{
+                                s32 Frame;
+                                f32 Scale;
+                            }Scale[ScaleCount];
+                            
+                        }
+                        else if (EntryType == 1)
+                        {   
+                            f32 Position[3];
+                        }
+                        else if (EntryType == 129)
+                        {   
+                            f32 Position[3];
+                            u32 Count;
+                            struct{
+                                u32 Frame;
+                                float Z;
+                                float Y;
+                                float X;
+                            }Scale[Count];
+                        }
+                        else if (EntryType == 1152)
+                        {   
+                            u32 PosCount;
+                            struct{
+                                u32 Frame;
+                                float Z;
+                                float Y;
+                                float X;
+                            }Positions[PosCount];
+                            u32 ScaleCount;
+                            struct{
+                                u32 Frame;
+                                float XYZ;
+                            }Scale[ScaleCount];
+                        }
+                        else if (EntryType == 1153)
+                        {   
+                            struct{
+                                float Z;
+                                float Y;
+                                float X;
+                            }Rotation;
+                            u32 PosCount;
+                            struct{
+                                u32 Frame;
+                                float Z;
+                                float Y;
+                                float X;
+                            }Positions[PosCount];
+                            u32 ScaleCount;
+                            struct{
+                                u32 Frame;
+                                float XYZ;
+                            }Scale[ScaleCount];
+                        }
+                        else if (EntryType == 1161)
+                        {   
+                            f32 Unknown[6];
+                            u32 ScaleCount;
+                            struct{
+                                s32 Frame;
+                                f32 Z;
+                                f32 Y;
+                                f32 X;
+                                
+                            }Scale[ScaleCount];
+                            u32 OpacityCount;
+                            struct{
+                                s32 Frame;
+                                f32 Opacity;
+                            }Opacity[OpacityCount];
+                            
+                        }
+                        else if (EntryType == 1168)
+                        {   
+                            u32 RosCount;
+                            struct{
+                                u32 Frame;
+                                float Z;
+                                float Y;
+                                float X;
+                            }Rotation[RosCount];
+                            u32 PosCount;
+                            struct{
+                                u32 Frame;
+                                float Z;
+                                float Y;
+                                float X;
+                            }Position[PosCount];
+                            u32 ScaleCount;
+                            struct{
+                                u32 Frame;
+                                float XYZ;
+                            }Scale[ScaleCount];
+                        }
+                        else if (EntryType == 1170)
+                        {   
+                                u32 PosCount;
+                                struct{
+                                    u32 Frame;
+                                    float Z;
+                                    float Y;
+                                    float X;
+                                }Position[PosCount];
+                                u32 RotCount;
+                                struct{
+                                    u32 Frame;
+                                    float Z;
+                                    float Y;
+                                    float X;
+                                }Rotation[RotCount];
+                                u32 ScaleCount;
+                                struct{
+                                    u32 Frame;
+                                    float Z;
+                                    float Y;
+                                    float X;
+                                }Scale[ScaleCount];
+                                u32 OpacityCount;
+                                struct{
+                                    u32 Frame;
+                                    float Opacity;
+                                }Opacity[OpacityCount];
+                        }
+*/  

@@ -12,7 +12,6 @@
 //------------------------------------------------
 
 #define CCS
-
 #include "/../include.h"
 #include "CCS_Types.bt"
 #include "CCS_Animation.bt"
@@ -343,7 +342,7 @@ typedef struct
         //sixth section is 3 bytes
         //seventh section is 4
         
-        else if (ModelType == 6)
+        else if (ModelType == 6 || ModelType == 7)
         {
             if (CCSF.Version > 0x111)
             {
@@ -358,50 +357,50 @@ typedef struct
             uint SectionCount;
             local int alignsize;
             struct{
-                byte idk ;
-                byte idk2 ;
-                byte idk3;
-                byte idk4;
-                uint SomethingCount;
+                byte unkFlag1;
+                byte SectionType;
+                byte unkFlag2;
+                byte unkFlag3;
+                uint Count;
                 float VertexScale;
-                if (idk2 == 8)
+                if (SectionType == 8)
                 {
-                    ushort data[SomethingCount];
+                    ushort TriangleIndices[Count];
                 }
-                else if (idk2 == 0)
+                else if (SectionType == 0)
                 {
                     struct
                     {
                         byte X <read= (this / 64.0)>;
                         byte Y <read= (this / 64.0)>;
                         byte Z <read= (this / 64.0)>;
-                    }data[SomethingCount];
+                    }VertexNormals[Count];
                 }
-                else if (idk2 == 1)
+                else if (SectionType == 1)
                 {
                     struct{
                         short U <read= (this / 256.0)>;
                         short V <read= (this / 256.0)>;
-                    }data[SomethingCount];
+                    }VertexUVs[Count];
                 }
-                else if (idk2 == 7)
+                else if (SectionType == 7)
                 {
-                    byte data[SomethingCount];
+                    byte TriangleFlags[Count];
                 }
-                else if (idk2 == 32)
+                else if (SectionType == 32)
                 {
                     struct{
                         short X <read = ((this / 16.0) / ((parentof(parentof(this)).VertexScale) / 256.0))>;
                         short Y <read = ((this / 16.0) / ((parentof(parentof(this)).VertexScale) / 256.0))>;
                         short Z <read = ((this / 16.0) / ((parentof(parentof(this)).VertexScale) / 256.0))>;
-                        short Unknown;
-                    }data[SomethingCount];
+                        short Weight <read = Str("(Bone = %d, Weight =%d)", (this >> 10),((this & 0x1ff) / 256))>;
+                    }VertexPositions[Count];
                 }
-                else if (idk2 == 33)
+                else if (SectionType == 33)
                 {
-                    ushort data[SomethingCount];
+                    ushort data[Count];
                 }
-                alignsize = (sizeof(this.data)) % 4;
+                alignsize = (FTell()) % 4;
             
                 if (alignsize != 0)
                 {

@@ -331,16 +331,6 @@ typedef struct
                 }Mesh;
             }
         }
-        //deformable/morphable/rigid
-        //there are some 0xEE bytes, there might be used for aligning
-        //each section has 4 unk bytes and u32 count followed by 4 padding bytes
-        //first section 2 bytes 
-        //second section 4 bytes
-        //third section 1 byte
-        //fourth section is 4 bytes
-        //fifth section is 8 bytes
-        //sixth section is 3 bytes
-        //seventh section is 4
         
         else if (ModelType == 6 || ModelType == 7)
         {
@@ -357,10 +347,10 @@ typedef struct
             uint SectionCount;
             local int alignsize;
             struct{
-                byte unkFlag1;
-                byte SectionType;
-                byte unkFlag2;
-                byte unkFlag3;
+                ubyte unkFlag1;
+                ubyte SectionType;
+                ubyte unkFlag2;
+                ubyte unkFlag3;
                 uint Count;
                 float VertexScale;
                 if (SectionType == 8)
@@ -393,12 +383,12 @@ typedef struct
                         short X <read = ((this / 16.0) / ((parentof(parentof(this)).VertexScale) / 256.0))>;
                         short Y <read = ((this / 16.0) / ((parentof(parentof(this)).VertexScale) / 256.0))>;
                         short Z <read = ((this / 16.0) / ((parentof(parentof(this)).VertexScale) / 256.0))>;
-                        short Weight <read = Str("(Bone = %d, Weight =%d)", (this >> 10),((this & 0x1ff) / 256))>;
-                    }VertexPositions[Count];
+                        short Weight <read = Str("(Bone = %d, Weight =%f)", (this >> 10),((this & 0x1ff) / 256.0))>;
+                    }VertexPositions[Count] <optimize = false>;
                 }
                 else if (SectionType == 33)
                 {
-                    ushort data[Count];
+                    u32 Clump[Count] <read=ReadChunkNameIndex>;
                 }
                 alignsize = (FTell()) % 4;
             

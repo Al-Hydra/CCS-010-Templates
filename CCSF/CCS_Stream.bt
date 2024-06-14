@@ -17,16 +17,10 @@ LittleEndian();
 typedef struct
 {   
     SetBackColor( AnimationSectionColor );
-    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
     s32 FrameCount;
-    u32 FramesSectionSize; //Multiplied by 4
-    
-    local int CurrentFrame = 0;
-    local int StartPos = FTell();
-    local int EndPos = StartPos + (FramesSectionSize * 4);
-    local int i;
-    
-    while (FTell() < EndPos)
+    local s32 CurrentFrame = 0;
+    local u32 ChunkNameIndex = 0;
+    while (CurrentFrame != -1)
     {
         struct
         {
@@ -116,4 +110,5 @@ typedef struct
         }AnimationChunk <read = ReadAnmChunkType(Type)>;
     }
         
-}ANM;
+}STRM;
+

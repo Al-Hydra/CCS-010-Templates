@@ -14,7 +14,9 @@
 #define CCS
 #include "/../include.h"
 #include "CCS_Types.bt"
+#include "CCS_AnmStructs.bt"
 #include "CCS_Animation.bt"
+#include "CCS_Stream.bt"
 
 local u32 ccsfColor = SetRandomBackColor();
 local u32 stringTableColor = SetRandomBackColor();
@@ -140,6 +142,17 @@ typedef struct
 
 }OBJ;
 
+
+typedef struct
+{   
+    SetBackColor( SetRandomBackColor() );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    char name[29];
+    BigEndian();
+    short someIndex;
+}BIN;
+
+
 //Material Chunk
 typedef struct
 {   
@@ -155,13 +168,20 @@ typedef struct
     }
     else
     {
-        u16 Offset1;
-        u16 Offset2;
+        s16 Offset1 <read = (this / 32767.0)>;
+        s16 Offset2 <read = (this / 32767.0)>;
         u8 data[DataSize * 4 - 0x10];
     }
     
-
 }MAT;
+
+//Material Chunk
+typedef struct
+{   
+    SetBackColor( SetRandomBackColor() );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+
+}CAM;
 
 //Texture Chunk
 typedef struct
@@ -218,6 +238,11 @@ typedef struct
     }
     
    u8 Pixels[TexDataSize];
+    
+    /*if (TextureType == 0)
+    {
+        Printf("Texture found at %d", ChunkNameIndex);
+    }*/
 
 }TEX;
 
@@ -323,8 +348,8 @@ typedef struct
 					        }
 					        else
 					        {
-                                u16 U;
-                                u16 V;					            
+                                s16 U;
+                                s16 V;					            
                             }
                         }UVCoords[VertexCount] <optimize = true>;
                     }
@@ -446,13 +471,13 @@ typedef struct
                     {
                         if (CCSF.Version >= 0x125)
                         {
-                            u32 U;
-                            u32 V;
+                            s32 U;
+                            s32 V;
                         }
                         else
                         {
-                            u16 U;
-                            u16 V;
+                            s16 U;
+                            s16 V;
                         }
                     } UVCoords[VertexCount] <optimize = true>;
                 } Mesh;
@@ -755,44 +780,46 @@ typedef struct
     u8 Data[(DataSize * 4) - 4];
 }LYR;
 
+
+//OutlineParam Chunk
 typedef struct
-{   
-    SetBackColor( AnimationSectionColor );
-    local uint ChunkNameIndex = 0;
-    u32 FrameCount;
+{
+    SetBackColor( SetRandomBackColor() );
+    u32 Layer <read=ReadChunkNameIndex>;
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 ObjectIndex <read=ReadChunkNameIndex>;
+    u32 Texture <read=ReadChunkNameIndex>;
+}OLP;
 
-    local int CurrentFrame = 0;
 
-    while (CurrentFrame != -1)
-    {
-        //Printf("Current Frame = %d\n", CurrentFrame);
-        struct{
-            AnimationTypes AnmChunkType;
-            FSkip(2);
-            switch (AnmChunkType)
-            {
-                case Dummy:
-                break;
+//CelShadeParam Chunk
+typedef struct
+{
+    SetBackColor( SetRandomBackColor() );
+    ushort unk1;
+    ushort unk2;
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 ObjectIndex <read=ReadChunkNameIndex>;
+    u32 TextureIndex <read=ReadChunkNameIndex>;
+}CSP;
 
-                case Frame:
-                    struct{
-                        u32 Size;
-                        s32 Frame;
-                    }FrameChunk;
-                    CurrentFrame = FrameChunk.Frame;
-                break;
+//CelShadeParam Chunk
+typedef struct
+{
+    SetBackColor( SetRandomBackColor() );
+    ushort unk1;
+    ushort unk2;
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    //u32 TextureIndex <read=ReadChunkNameIndex>;
+}FSB;
 
-                default:
-                    struct{
-                    u32 Size;
-                    u8 Data[Size * 4];
-                    }AnmUnk;
-                break;
-            }
-        }AnimationChunk;
-    }
-        
-}STRM;
+typedef struct
+{
+    SetBackColor( SetRandomBackColor() );
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 Unk;
+}LIT;
+
 
 //Unknown Chunk
 typedef struct
@@ -848,6 +875,9 @@ typedef struct
         case Dummy_Position_Rotation:
             struct DMY2 Chunk;
             break;
+        /*case Binary_Blob:
+            struct BIN Chunk;
+            break;*/
         case HitModel:
             struct HIT Chunk;
             break;
@@ -860,8 +890,23 @@ typedef struct
         case Stream:
             struct STRM Chunk;
             break;
+        case StreamOutlineParam:
+            struct OLP Chunk;
+            break;
+        case StreamCelShadeParam:
+            struct CSP Chunk;
+            break;
+        case StreamFSBlurParam:
+            struct FSB Chunk;
+            break;
+        case Camera:
+            struct CAM Chunk;
+            break;
         case Frame:
             //s32 Index;
+            break;
+        case Light:
+            struct LIT Chunk;
             break;
         
         default:
@@ -949,12 +994,24 @@ string ReadAnmChunkType(AnimationTypes & value)
             str = "NoteFrame";
         break;
         
+        case 0x0201:
+            str = "MaterialFrame";
+        break;
+        
         case 0x0202:
             str = "MaterialController";
+        break;
+
+        case 0x0502:
+            str = "CameraFrame";
         break;
         
         case 0x0601:
             str = "AmbientKeyframe";
+        break;
+
+        case 0x0602:
+            str = "DistantLightFrame";
         break;
         
         case 0x0603:
@@ -965,8 +1022,24 @@ string ReadAnmChunkType(AnimationTypes & value)
             str = "OmniLightController";
         break;
         
+        case 0x1801:
+            str = "ShadowFrame";
+        break;
+
         case 0x1901:
             str = "MorphKeyframe";
+        break;
+
+        case 0x1A01:
+            str = "OutlineFrame";
+        break;
+
+        case 0x1B01:
+            str = "CelShadeFrame";
+        break;
+        
+        case 0x1D01:
+            str = "FBSBlurFrame";
         break;
         
     }

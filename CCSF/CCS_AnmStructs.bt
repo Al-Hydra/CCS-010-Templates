@@ -1,0 +1,401 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: CCS.bt
+//   Authors: HydraBladeZ, Dei
+//   Version: 0.01
+//   Purpose: Parse CCS files
+//  Category: 
+// File Mask: *.ccs
+//  ID Bytes: 46 53 43 43
+//   History: 
+//------------------------------------------------
+
+LittleEndian();
+
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    float ShadowXYZ[3];
+    struct ColorRGBA Color;
+}SdwFrame;
+
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Flags;
+    float LightXYZ[3];
+    struct ColorRGBA Color;
+    
+    if ((Flags & 0x20) != 0)
+    {
+        f32 Intensity;
+    }
+}DistantLFrame;
+
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Unk1;
+    u32 Unk2;
+}NoteF;
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Flags;
+    float OutlineOpacity;
+    float OutlineScale;
+    struct ColorRGBA OutlineColor;
+}OLPFrame;
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Flags;
+    float ShadingTone;
+    float ShadingThreshold;
+}CSPFrame;
+
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Flags;
+    float F;
+    float S;
+    struct ColorRGBA Color;
+    float unk;
+}FBSBFrame;
+
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    uint Flags;
+
+    
+
+    if ((Flags & 1) == 0)
+    {
+        float a;
+        float b;
+        float c;
+    }
+
+    if ((Flags & 2) == 0)
+    {
+        float a;
+        float b;
+        float c;
+    }
+    
+}MatFrame;
+
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Count;
+    struct
+    {
+        s32 Frame;
+        f32 Value;
+    }MorphFrame[Count];
+    
+}MorphFrame;
+
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Flags;
+    u32 TargetModel <read= ReadChunkNameIndex>;
+    u32 Unk;
+    u32 Frames;
+    
+    struct{
+        u32 Frame;
+        float Value;
+    }MorphFCtrl[Frames];
+    
+}MorphCtrl;
+
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Flags;
+    struct{
+        AnmCtrlFloat(Flags);
+    }OffsetX;
+    struct{
+        AnmCtrlFloat(Flags >> 3);
+    }OffsetY;
+    struct{
+        AnmCtrlFloat(Flags >> 6);
+    }ScaleX;
+    struct{
+        AnmCtrlFloat(Flags >> 9);
+    }ScaleY;
+    
+}MatCtrl;
+
+
+typedef struct{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Flags;
+    
+    struct{
+        AnmCtrlFVec3(Flags);
+    }Position;
+    
+    struct{
+        AnmCtrlRot(Flags >> 3);
+    }Rotation;
+
+    struct{
+    AnmCtrlFloat(Flags);
+    }FOV;
+
+}CamCtrl;
+
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Flags;
+    
+    if ((Flags & 2) == 0)
+    {
+        f32 PosX;
+    }
+    if ((Flags & 4) == 0)
+    {
+        f32 PosY;
+    }
+    if ((Flags & 8) == 0)
+    {
+        f32 PosZ;
+    }
+    if ((Flags & 0x10) == 0)
+    {
+        f32 RotX;
+    }
+    if ((Flags & 0x20) == 0)
+    {
+        f32 RotY;
+    }
+    if ((Flags & 0x40) == 0)
+    {
+        f32 RotZ;
+    }
+    if ((Flags & 0x80) == 0)
+    {
+        f32 RotW;
+    }
+    if ((Flags & 0x100) == 0)
+    {
+        f32 FOV;
+    }
+
+}CamFrame;
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Flags;
+    
+    if ((Flags & 2) == 0)
+    {
+        f32 PosX;
+    }
+    if ((Flags & 4) == 0)
+    {
+        f32 PosY;
+    }
+    if ((Flags & 8) == 0)
+    {
+        f32 PosZ;
+    }
+    if ((Flags & 0x10) == 0)
+    {
+        f32 RotX;
+    }
+    if ((Flags & 0x20) == 0)
+    {
+        f32 RotY;
+    }
+    if ((Flags & 0x40) == 0)
+    {
+        f32 RotZ;
+    }
+    if ((Flags & 0x80) == 0)
+    {
+        f32 RotW;
+    }
+    if ((Flags & 0x100) == 0)
+    {
+        f32 ScaleX;
+    }
+    if ((Flags & 0x200) == 0)
+    {
+        f32 ScaleY;
+    }
+    if ((Flags & 0x400) == 0)
+    {
+        f32 ScaleZ;
+    }
+    if ((Flags & 0x800) == 0)
+    {
+        u32 Unk;
+    }
+
+}ObjFrame;
+
+typedef struct
+{
+    s32 CurrentFrame;
+}Keyframe;
+
+typedef struct
+{
+    u32 ObjectID <read=ReadChunkNameIndex>;
+    u32 EntryType;
+    
+    struct{
+        AnmCtrlFVec3(EntryType);
+    }Position;
+    
+    struct{
+        AnmCtrlRot(EntryType >> 3);
+    }Rotation;
+    
+    struct{
+    AnmCtrlFVec3(EntryType >> 6);
+    }Scale;
+    
+    struct{
+    AnmCtrlFloat(EntryType >> 9);
+    }Opacity;
+
+}ObjCtrl;
+
+void AnmCtrlFVec3(u16 EntryType)
+{
+    if ((EntryType & 7) == 2)
+    {
+        u32 FrameCount;
+        
+        local int i;
+        for (i = 0; i < FrameCount; i++)
+        {
+
+            u32 Frame;
+            struct Vector3 Vector;
+        }
+        
+    }
+    else if ((EntryType & 7) == 1)
+    {
+        struct Vector3 Position;
+    }
+}
+
+
+void AnmCtrlRot(u16 EntryType)
+{
+    if ((EntryType & 7) == 2)
+    {
+        u32 FrameCount;
+
+        local int i;
+        for (i = 0; i < FrameCount; i++)
+        {
+            u32 Frame;
+            struct RotEuler Rotation;
+        }
+    }
+    if ((EntryType & 7) == 4)
+    {
+        u32 FrameCount;
+
+        local int i;
+        for (i = 0; i < FrameCount; i++)
+        {
+            u32 Frame;
+            struct RotQuaternion Rotation;
+        }
+    }
+    else if ((EntryType & 7) == 1)
+    {
+        struct RotEuler Rotation;
+    }
+}
+
+void AnmCtrlClr(u16 EntryType)
+{
+    if ((EntryType & 7) == 2)
+    {
+        u32 FrameCount;
+        local int i;
+        for (i = 0; i < FrameCount; i++)
+        {
+            u32 Frame;
+            struct ColorRGBA Color;
+        }
+    }
+    else if ((EntryType & 7) == 1)
+    {
+        struct ColorRGBA Color;
+    }
+}
+
+void AnmCtrlFloat(u16 EntryType)
+{
+    if ((EntryType & 7) == 2)
+    {
+        u32 FrameCount;
+        local int i;
+        for (i = 0; i < FrameCount; i++)
+        {
+            struct{
+                u32 Frame;
+                f32 FloatFrame;
+            }FloatF;
+        }
+    }
+    else if ((EntryType & 7) == 1)
+    {
+        f32 FloatFrame;
+    }
+}
+
+typedef struct{
+    float PosX;
+    float PosY;
+    float PosZ;
+}Vector3;
+
+typedef struct{
+    float RotX;
+    float RotY;
+    float RotZ;
+}RotEuler;
+
+typedef struct{
+    float RotX;
+    float RotY;
+    float RotZ;
+    float RotW;
+}RotQuaternion;
+
+typedef struct{
+    ubyte R;
+    ubyte G;
+    ubyte B;
+    ubyte A;
+}ColorRGBA;

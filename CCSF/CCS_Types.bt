@@ -44,7 +44,7 @@ enum <u16> DataTypes
     Layer                   = 0x1700,
     Shadow                  = 0x1800,
     Morpher                 = 0x1900,
-    StreamChunk             = 0x1A00, //streamoutlineparam
+    StreamOutlineParam      = 0x1A00, //streamoutlineparam
     StreamCelShadeParam     = 0x1B00,
     StreamToneShadeParam    = 0x1C00,
     StreamFSBlurParam       = 0x1D00,
@@ -53,7 +53,7 @@ enum <u16> DataTypes
     PCM_Audio               = 0x2200,
     Dynamics                = 0x2300,
     Binary_Blob             = 0x2400,
-    Frame                   = 0xff01
+    //Frame                   = 0xff01
 };
 
 
@@ -84,6 +84,7 @@ enum <u16> AnimationTypes
     MaterialFrame                   = 0x0201,
     MaterialController              = 0x0202,
     CameraFrame                     = 0x0502,
+    CameraController                = 0x0503,
     AmbientFrame                    = 0x0601,
     DistantLightFrame               = 0x0602,
     DirectionalLightController      = 0x0603,
@@ -95,9 +96,11 @@ enum <u16> AnimationTypes
     ModelNormalFrame                = 0x0803,
     ShadowFrame                     = 0x1801,
     MorpherFrame                    = 0x1901,
+    MorpherController               = 0x1902,
+    OutlineFrame                    = 0x1a01,
     CelShadeFrame                   = 0x1b01,
     ToneShadeFrame                  = 0x1c01,
-    FSBlurFrame                     = 0x1d01,
+    FBSBlurFrame                    = 0x1d01,
     PCMFrame                        = 0x2201,
-    TopFrame                        = -0xff
+    Frame                           = 0xff01
 };

@@ -168,8 +168,8 @@ typedef struct
     }
     else
     {
-        s16 Offset1 <read = (this / 32767.0)>;
-        s16 Offset2 <read = (this / 32767.0)>;
+        s16 Offset1 <read = (this / 256.0)>;
+        s16 Offset2 <read = (this / 256.0)>;
         u8 data[DataSize * 4 - 0x10];
     }
     
@@ -785,12 +785,22 @@ typedef struct
 typedef struct
 {
     SetBackColor( SetRandomBackColor() );
+    s16 X <read = (this / 32767.0)>;
+    s16 Y <read = (this / 32767.0)>;
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 ObjectIndex <read=ReadChunkNameIndex>;
+    u32 Texture <read=ReadChunkNameIndex>;
+}TSP;
+
+//ToneShadeParam Chunk
+typedef struct
+{
+    SetBackColor( SetRandomBackColor() );
     u32 Layer <read=ReadChunkNameIndex>;
     u32 ChunkNameIndex <read=ReadChunkNameIndex>;
     u32 ObjectIndex <read=ReadChunkNameIndex>;
     u32 Texture <read=ReadChunkNameIndex>;
 }OLP;
-
 
 //CelShadeParam Chunk
 typedef struct
@@ -803,15 +813,14 @@ typedef struct
     u32 TextureIndex <read=ReadChunkNameIndex>;
 }CSP;
 
-//CelShadeParam Chunk
+//FBSB Chunk
 typedef struct
 {
     SetBackColor( SetRandomBackColor() );
     ushort unk1;
     ushort unk2;
     u32 ChunkNameIndex <read=ReadChunkNameIndex>;
-    //u32 TextureIndex <read=ReadChunkNameIndex>;
-}FSB;
+}FBSB;
 
 typedef struct
 {
@@ -893,11 +902,14 @@ typedef struct
         case StreamOutlineParam:
             struct OLP Chunk;
             break;
+        case StreamToneShadeParam:
+            struct TSP Chunk;
+            break;
         case StreamCelShadeParam:
             struct CSP Chunk;
             break;
         case StreamFSBlurParam:
-            struct FSB Chunk;
+            struct FBSB Chunk;
             break;
         case Camera:
             struct CAM Chunk;

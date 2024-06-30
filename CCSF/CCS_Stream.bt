@@ -3,7 +3,7 @@
 //
 //      File: CCS.bt
 //   Authors: HydraBladeZ
-//   Version: 0.01
+//   Version: 1.00
 //   Purpose: Parse CCS files
 //  Category: 
 // File Mask: *.ccs
@@ -51,6 +51,7 @@ typedef struct
                 case MorpherFrame:
                     struct MorphFrame MorpherFrame;
                 break;
+
                 case MorpherController:
                     struct MorphCtrl MorphController;
                 break;

@@ -3,7 +3,7 @@
 //
 //      File: CCS.bt
 //   Authors: HydraBladeZ, Dei
-//   Version: 0.01
+//   Version: 1.00
 //   Purpose: Parse CCS files
 //  Category: 
 // File Mask: *.ccs
@@ -33,7 +33,7 @@ typedef struct
     {
         f32 Intensity;
     }
-}DistantLFrame;
+}DistantLFrame; 
 
 
 typedef struct
@@ -81,14 +81,14 @@ typedef struct
 
     if ((Flags & 1) == 0)
     {
-        float a;
+        float offsetX;
         float b;
         float c;
     }
 
     if ((Flags & 2) == 0)
     {
-        float a;
+        float offsetY;
         float b;
         float c;
     }
@@ -115,12 +115,13 @@ typedef struct
     u32 Flags;
     u32 TargetModel <read= ReadChunkNameIndex>;
     u32 Unk;
-    u32 Frames;
+    //u32 Frames;
     
     struct{
         u32 Frame;
         float Value;
     }MorphFCtrl[Frames];
+
     
 }MorphCtrl;
 
@@ -235,23 +236,23 @@ typedef struct
     }
     if ((Flags & 0x80) == 0)
     {
-        f32 RotW;
+        f32 ScaleX;
     }
     if ((Flags & 0x100) == 0)
     {
-        f32 ScaleX;
+        f32 ScaleY;
     }
     if ((Flags & 0x200) == 0)
     {
-        f32 ScaleY;
+        f32 ScaleZ;
     }
     if ((Flags & 0x400) == 0)
     {
-        f32 ScaleZ;
+        f32 Unk;
     }
     if ((Flags & 0x800) == 0)
     {
-        u32 Unk;
+        u32 Opacity;
     }
 
 }ObjFrame;

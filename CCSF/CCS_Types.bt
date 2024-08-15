@@ -89,7 +89,7 @@ enum <u16> AnimationTypes
     CameraController                = 0x0503,
     AmbientFrame                    = 0x0601,
     DistantLightFrame               = 0x0602,
-    DirectionalLightController      = 0x0603,
+    DistantLightController          = 0x0603,
     DirectLightFrame                = 0x0604,
     //Unknow                        = 0x0605,
     SpotLightFrame                  = 0x0606,

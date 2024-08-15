@@ -77,7 +77,7 @@ typedef struct
                     struct DistantLFrame Distant;
                 break;
                 
-                case DirectionalLightController:
+                case DistantLightController:
                     struct DistantLCtrl DistantLController;
                 break;
 

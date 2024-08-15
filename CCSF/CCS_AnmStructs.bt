@@ -120,17 +120,6 @@ typedef struct
 {
     u32 Index <read= ReadChunkNameIndex>;
     u32 Count;
-    //u32 Flags;
-    //u32 TargetModel <read= ReadChunkNameIndex>;
-    //u32 Unk;
-    //u32 Frames;
-    //u32 Frames;
-    
-    //struct{
-    //    u32 Frame;
-    //    float Value;
-    //}MorphFCtrl[Frames];
-    
     
     struct{
         u32 MorphIndex;
@@ -152,8 +141,6 @@ typedef struct
         
     }MorphTarget[Count] <optimize=false>;
     
-    //u8 data[(Size * 4) - 8];
-    
 }MorphCtrl;
 
 
@@ -161,8 +148,6 @@ typedef struct
 {
     u32 Index <read= ReadChunkNameIndex>;
     u32 Flags;
-    //u16 Flags;
-    //u16 C;
     struct{
         AnmCtrlFloat(Flags);
     }OffsetX;
@@ -179,19 +164,10 @@ typedef struct
     //Unknown
     struct{
         AnmCtrlFloat(Flags >> 12);
-    }OffsetA;
+    }Offset_Unknown00;
     struct{
         AnmCtrlFloat(Flags >> 15);
-    }OffsetB;
-    
-    //if (Size == 52)
-    //{
-    //    u8 data[(Size * 4) - 112];
-    //}
-    //if (Size == 36)
-    //{
-    //    u8 data[(Size * 4) - 80];
-    //}
+    }Offset_Unknown01;
     
 }MatCtrl;
 
@@ -410,7 +386,7 @@ void AnmCtrlFloat(u16 EntryType)
     if ((EntryType & 7) == 2)
     {
         u16 FrameCount;
-        u16 FrameCount00;
+        u16 Unk;
         
         local int i;
         for (i = 0; i < FrameCount; i++)

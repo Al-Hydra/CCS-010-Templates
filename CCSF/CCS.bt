@@ -16,6 +16,8 @@
 #include "CCS_Types.bt"
 #include "CCS_AnmStructs.bt"
 #include "CCS_Animation.bt"
+#include "CCS_PartStructs.bt"
+#include "CCS_Particle.bt"
 #include "CCS_Stream.bt"
 
 local u32 ccsfColor = SetRandomBackColor();
@@ -135,7 +137,7 @@ typedef struct
     u32 ShadowID <read=ReadChunkNameIndex>;
 
     local u32 CurVersion = CCSF.Version;
-    if (CurVersion > 0x120)
+    if (CurVersion > 0x120 && DataSize != 4)
     {
         u32 Extra <read=ReadChunkNameIndex>;
     }
@@ -162,9 +164,83 @@ typedef struct
     float Alpha;
     if (CCSF.Version > 0x120)
     {
-        float OffsetX;
-        float OffsetY;
-        u8 data[(DataSize * 4) - 0x14];
+        //float OffsetX;
+        //float OffsetY;
+		
+		if (CCSF.Version > 0x130)
+		{
+            //float OffsetX;
+            //float OffsetY;
+            s16 OffsetX <read = (this / 4096.0)>;
+            s16 OffsetY <read = (this / 4096.0)>;
+            s16 scaleX  <read = (this / 4096.0)>;
+            s16 scaleY  <read = (this / 4096.0)>;
+            
+			struct {
+			    u8	u8_Unk_00; //have only seen as 0xFF
+			    u8	u8_Unk_01; //have only seen as 0x00
+			    u8	u8_Unk_02; //have only seen as 0x00
+			    u8	u8_Unk_03; //have only seen as 0x80
+			    u32	u32_Unk_04;
+			
+			    struct
+			    {
+				    u8 R;
+				    u8 G;
+				    u8 B;
+				    u8 A;
+			    }AmbientColor;
+			
+			    u32	Texture02Index <read=ReadChunkNameIndex>;
+			    float	NormalMapParam;
+			    u32		u32_Unk_05;
+			    u32		Texture03Index <read=ReadChunkNameIndex>;
+			    float	SpecularParam_Y;
+			    float	SpecularParam_X;
+			    u32		Texture04Index <read=ReadChunkNameIndex>;
+			    u8      MultiTexParam_Y;
+			    u8      u32_Unk_6;
+			    u8      MultiTexParam_Z;
+			    u8      u32_Unk_7;
+			
+			    struct
+			    {
+				    float MultiTexUV_X;
+				    float MultiTexUV_Y;
+				    float MultiTexUV_Z;
+				    float MultiTexUV_W;
+			    }MultiTexUV;
+                
+			    float	MultiTexSpeed_X;
+			    float	MultiTexSpeed_Y;
+			
+			    struct
+			    {
+				    u8 R;
+				    u8 G;
+				    u8 B;
+				    u8 A;
+			    }EmissionColor;
+			} data_gen3_1;
+		}
+		else if (CCSF.Version == 0x130)
+		{
+            //float OffsetX;
+            //float OffsetY;
+            s16 OffsetX <read = (this / 4096.0)>;
+            s16 OffsetY <read = (this / 4096.0)>;
+            s16 scaleX  <read = (this / 4096.0)>;
+            s16 scaleY  <read = (this / 4096.0)>;
+			u32 data_gen3_0[9];
+		}
+		else
+		{
+            s16 OffsetX <read = (this / 4096.0)>;
+            s16 OffsetY <read = (this / 4096.0)>;
+            s16 scaleX  <read = (this / 4096.0)>;
+            s16 scaleY  <read = (this / 4096.0)>;
+			u8 data[(DataSize * 4) - 0x14];
+		}
     }
     else
     {
@@ -175,7 +251,7 @@ typedef struct
     
 }MAT;
 
-//Material Chunk
+//Camera Chunk
 typedef struct
 {   
     SetBackColor( SetRandomBackColor() );
@@ -212,9 +288,12 @@ typedef struct
         u16 TexWidth;
         u16 TexHeight;
     }
-    else if (TextureType == 0x87|| TextureType == 0x89)
+    else if (TextureType == 0x87|| TextureType == 0x88|| TextureType == 0x89)
     {
-        FSkip(0x10);
+        FSkip(0x04);
+        u32 TextureDataSizeBTX;
+        FSkip(0x08);
+        //FSkip(0x10);
         u16 TexWidth;
         u16 TexHeight;
         FSkip(0x14);
@@ -226,23 +305,36 @@ typedef struct
     
     u32 TextureDataSize;
     
-    if (TextureType == 0x87|| TextureType == 0x89)
+    if (TextureType == 0x87|| TextureType == 0x88|| TextureType == 0x89)
     {
-        local u32 TexDataSize = TextureDataSize - 0x40;
+        local u32 TexDataSize = TextureDataSizeBTX - 0x40;
         FSkip(0x0C);
         char TextureName[16];
     }
     else
     {
         local u32 TexDataSize = TextureDataSize << 2;
+        
     }
     
    u8 Pixels[TexDataSize];
+   
+    if (MipMapsCount > 0)
+    {
+        struct
+            {
+            u32 MipMap_Unk4;
+            u32 MipMap_DataSize;
+            u8 MipMap_Pixaks[MipMap_DataSize * 4];
+        }MipMaps[MipMapsCount] <optimize=false>;
+            
+    }
     
     /*if (TextureType == 0)
     {
         Printf("Texture found at %d", ChunkNameIndex);
     }*/
+    
 
 }TEX;
 
@@ -251,7 +343,7 @@ typedef struct
 {   
     SetBackColor( ColorPaletteSectionColor );
     u32 ChunkNameIndex <read=ReadChunkNameIndex>;
-    u32 BlitGroup;
+    u32 BlitGroupID <read=ReadChunkNameIndex>;
     FSkip(8);
     u32 ColorCount;
     local int i;
@@ -279,7 +371,9 @@ typedef struct
     u8 SourceFactor;
     u8 DestinationFactor;
     s16 UnkFlags;
-    u32 LookupCount;
+    u8 LookupCount;
+    u8 unk1;
+    u16 TangentBinormalFlag;
     local u32 CurVersion = CCSF.Version;
     if (CurVersion > 0x110)
     {
@@ -319,9 +413,9 @@ typedef struct
                     struct
                     {
 
-                        s8 vnX;
-                        s8 vnY;
-                        s8 vnZ;
+                        s8 vnX <read= Str("%f , %d", this / 64.0, this)>;
+                        s8 vnY <read= Str("%f , %d", this / 64.0, this)>;
+                        s8 vnZ <read= Str("%f , %d", this / 64.0, this)>;
 
                         u8 triFlag;
                     }VertsNormals[VertexCount];
@@ -343,16 +437,35 @@ typedef struct
                         {
                             if(CCSF.Version >= 0x125)
 					        {
-						        u32 U;
-                                u32 V;
+						        s32 U <read= Str("%f , %d", this / 65536.0, this)>;
+                                s32 V <read= Str("%f , %d", this / 65536.0, this)>;
 					        }
 					        else
 					        {
-                                s16 U;
-                                s16 V;					            
+                                s16 U <read= Str("%f , %d", this / 256.0, this)>;
+                                s16 V <read= Str("%f , %d", this / 256.0, this)>;					            
                             }
                         }UVCoords[VertexCount] <optimize = true>;
                     }
+					
+					if (TangentBinormalFlag == 1)
+					{
+						struct
+						{
+							s8 vtX <read= Str("%f , %d", this / 64.0, this)>;
+							s8 vtY <read= Str("%f , %d", this / 64.0, this)>;
+							s8 vtZ <read= Str("%f , %d", this / 64.0, this)>;
+							u8 Flag;
+						} VertsTangernts[VertexCount];
+										
+						struct
+						{
+							s8 vbX <read= Str("%f , %d", this / 64.0, this)>;
+							s8 vbY <read= Str("%f , %d", this / 64.0, this)>;
+							s8 vbZ <read= Str("%f , %d", this / 64.0, this)>;
+							u8 Flag;
+						} VertsBinormals[VertexCount];
+					}
                 }Mesh;
             }
         }
@@ -439,157 +552,198 @@ typedef struct
             
             local int m, i, v;
             for (m = 0; m < MeshCount; m++)
-            {
-                struct
-                {
-                    u32 MatTexID <read=ReadChunkNameIndex>;
-                    u32 VertexCount;
-                    u32 Unk;
-                    u32 ParentID; // from lookup list
-        
-                    struct
-                    {
-                        s16 X;
-                        s16 Y;
-                        s16 Z;
-                    } VertexPositions[VertexCount];
-        
-                    if ((FTell() % 4) == 2)
-                    {
-                        u16 Padding;
-                    }
-        
-                    struct
-                    {
-                        u8 vnX;
-                        u8 vnY;
-                        u8 vnZ;
-                        u8 triFlag;
-                    } VertsNormals[VertexCount];
-        
-                    struct
-                    {
-                        if (CCSF.Version >= 0x125)
-                        {
-                            s32 U;
-                            s32 V;
-                        }
-                        else
-                        {
-                            s16 U;
-                            s16 V;
-                        }
-                    } UVCoords[VertexCount] <optimize = true>;
-                } Mesh;
-                
-                if (m+2 >= MeshCount)
-                {
-                    break;
-                }
-            }
+            {	
+				struct
+				{
+					u32 MatTexID <read=ReadChunkNameIndex>;
+					u32 VertexCount;
+					u32 DeformableVerts;
+					
+					if (DeformableVerts == 0)
+					{
+						struct
+						{
+							u32 ParentID; // from lookup list
+				
+							struct
+							{
+								s16 X;
+								s16 Y;
+								s16 Z;
+							} VertexPositions[VertexCount];
+				
+							if ((FTell() % 4) == 2)
+							{
+								u16 Padding;
+							}
+				
+							struct
+							{
+								s8 vnX <read= (this / 64.0)>;
+								s8 vnY <read= (this / 64.0)>;
+								s8 vnZ <read= (this / 64.0)>;
+								u8 triFlag;
+							} VertsNormals[VertexCount];
+				
+							struct
+							{
+								if (CCSF.Version >= 0x125)
+								{
+									s32 U;
+									s32 V;
+								}
+								else
+								{
+									s16 U;
+									s16 V;
+								}
+							} UVCoords[VertexCount] <optimize = true>;
+							
+							if (TangentBinormalFlag == 1)
+							{
+								struct
+								{
+									s8 vtX <read= (this / 64.0)>;
+									s8 vtY <read= (this / 64.0)>;
+									s8 vtZ <read= (this / 64.0)>;
+									u8 Flag;
+								} VertsTangernts[VertexCount];
+								
+								struct
+								{
+									s8 vbX <read= (this / 64.0)>;
+									s8 vbY <read= (this / 64.0)>;
+									s8 vbZ <read= (this / 64.0)>;
+									s8 Flag;
+								} VertsBinormals[VertexCount];
+							}
+				
+						} Mesh;
+					}
             
-            if (LookupCount > 1)
-            {
-                struct
-                {
-                    u32 MatTexID <read=ReadChunkNameIndex>;
-                    u32 VertexCount;
-                    u32 DeformableVerts;
-            
-                    if (CCSF.Version < 0x125)
-                    {
-                        local int t;
-            
-                        struct
-                        {
-                            s16 X;
-                            s16 Y;
-                            s16 Z;
-                            u16 Params;
-                            local int dualFlag = ((Params >> 9) & 0x1) == 0;
-            
-                            if (dualFlag)
-                            {
-                                s16 X2;
-                                s16 Y2;
-                                s16 Z2;
-                                u16 Params2;
-                            }
-                        } VertexPosition[VertexCount] <optimize = false>;
-            
-                        if ((FTell() % 4) == 2)
-                        {
-                            u16 Padding;
-                        }
-            
-                        struct
-                        {
-                            u8 vnX;
-                            u8 vnY;
-                            u8 vnZ;
-                            u8 triFlag;
-                        } VertsNormals[DeformableVerts];
-            
-                        struct
-                        {
-                            if (CCSF.Version >= 0x125)
-                            {
-                                u32 U;
-                                u32 V;
-                            }
-                            else
-                            {
-                                u16 U;
-                                u16 V;
-                            }
-                        } UVCoords[VertexCount] <optimize = true>;
-                    }
-                    else if (ModelType == 6)
-                    {
-                        if (CurVersion > 0x111)
-                        {
-                            u8 LookupList[LookupCount] <read=ReadChunkNameLookup>;
-                        }
-                        if ((FTell() % 4) != 0)
-                        {
-                            local u32 PadSize = 4 - (FTell() % 4);
-                            FSkip(PadSize);
-                        }
-                    }
-                    else
-                    {
-                        // GEN3
-                        struct
-                        {
-                            s16 X;
-                            s16 Y;
-                            s16 Z;
-                            u16 Weight;
-                            u16 StopBit;
-                            u16 BoneID;
-                        } VertexPositions[DeformableVerts];
-            
-                        if ((FTell() % 4) == 2)
-                        {
-                            u16 Padding;
-                        }
-            
-                        struct
-                        {
-                            u8 vnX;
-                            u8 vnY;
-                            u8 vnZ;
-                            u8 triFlag;
-                        } VertsNormals[DeformableVerts];
-            
-                        struct
-                        {
-                            u32 U;
-                            u32 V;
-                        } UVCoords[VertexCount];
-                    }
-                } DeformableMesh;
-            }
+					if (LookupCount > 1)
+					{
+						if (DeformableVerts != 0)
+						{
+							struct
+							{
+						
+								if (CCSF.Version < 0x125)
+								{
+									local int t;
+						
+									struct
+									{
+										s16 X;
+										s16 Y;
+										s16 Z;
+										u16 Params;
+										local int dualFlag = ((Params >> 9) & 0x1) == 0;
+						
+										if (dualFlag)
+										{
+											s16 X2;
+											s16 Y2;
+											s16 Z2;
+											u16 Params2;
+										}
+									} VertexPosition[VertexCount] <optimize = false>;
+						
+									if ((FTell() % 4) == 2)
+									{
+										u16 Padding;
+									}
+						
+									struct
+									{
+										u8 vnX;
+										u8 vnY;
+										u8 vnZ;
+										u8 triFlag;
+									} VertsNormals[DeformableVerts];
+						
+									struct
+									{
+										if (CCSF.Version >= 0x125)
+										{
+											u32 U;
+											u32 V;
+										}
+										else
+										{
+											u16 U;
+											u16 V;
+										}
+									} UVCoords[VertexCount] <optimize = true>;
+								}
+								else if (ModelType == 6)
+								{
+									if (CurVersion > 0x111)
+									{
+										u8 LookupList[LookupCount] <read=ReadChunkNameLookup>;
+									}
+									if ((FTell() % 4) != 0)
+									{
+										local u32 PadSize = 4 - (FTell() % 4);
+										FSkip(PadSize);
+									}
+								}
+								else
+								{
+									// GEN3
+									struct
+									{
+										s16 X;
+										s16 Y;
+										s16 Z;
+										u16 Weight;
+										u16 StopBit;
+										u16 BoneID;
+									} VertexPositions[DeformableVerts];
+						
+									if ((FTell() % 4) == 2)
+									{
+										u16 Padding;
+									}
+						
+									struct
+									{
+										s8 vnX <read= Str("%f , %d", this / 64.0, this)>;
+										s8 vnY <read= Str("%f , %d", this / 64.0, this)>;
+										s8 vnZ <read= Str("%f , %d", this / 64.0, this)>;
+										u8 triFlag;
+									} VertsNormals[DeformableVerts];
+						
+									struct
+									{
+										u32 U;
+										u32 V;
+									} UVCoords[VertexCount];
+							
+									if (TangentBinormalFlag == 1)
+									{
+										struct
+										{
+											s8 vtX <read= Str("%f , %d", this / 64.0, this)>;
+											s8 vtY <read= Str("%f , %d", this / 64.0, this)>;
+											s8 vtZ <read= Str("%f , %d", this / 64.0, this)>;
+											u8 Flag;
+										} VertsTangernts[DeformableVerts];
+										
+										struct
+										{
+											s8 vbX <read= Str("%f , %d", this / 64.0, this)>;
+											s8 vbY <read= Str("%f , %d", this / 64.0, this)>;
+											s8 vbZ <read= Str("%f , %d", this / 64.0, this)>;
+											u8 Flag;
+										} VertsBinormals[DeformableVerts];
+									}
+								}
+							} DeformableMesh;
+						}
+					}
+				} SubModel;
+			}
         }
         //Shadow Models
         else if (ModelType == ShadowMesh)
@@ -829,6 +983,37 @@ typedef struct
     u32 Unk;
 }LIT;
 
+//Blit Chunk
+typedef struct
+{
+    local uint ChunkNameIndex = 0;
+    u8 Data[(DataSize * 4)];
+}BLT;
+
+//EffectChunk
+typedef struct
+{
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 TextureIndex <read=ReadChunkNameIndex>;
+    u16 unk1;
+    u16 unk2;
+    u16 unk3;
+    u16 Count;
+    float unk;
+    float unk;
+    float unk;
+    float unk;
+    u16 TexTile_X <read = (this / 4096.0)>;
+    u16 TexTile_Y <read = (this / 4096.0)>;
+    
+    struct
+    {
+    u16 Offset_X  <read = (this / 4096.0), comment="Horizontal">;
+    u16 Offset_Y  <read = (this / 4096.0), comment="Vertical">;
+    u16 TexTile_Opacity  <read = (this / 8192.0)>;
+    s16 A;
+    } TexTile_Frames[Count];
+}EFF;
 
 //Unknown Chunk
 typedef struct
@@ -878,6 +1063,17 @@ typedef struct
         case Bounding_Box:
             struct BOX Chunk;
             break;
+        case Effect:
+            struct EFF Chunk;
+            break;
+            
+        case PartAnmCtrl:
+            struct PAC Chunk;
+            break;
+        case PartGenerator:
+            struct PGE Chunk;
+            break;
+            
         case Dummy_Position:
             struct DMY Chunk;
             break;
@@ -920,6 +1116,9 @@ typedef struct
         case Light:
             struct LIT Chunk;
             break;
+        case Blit_Group:
+            struct BLT Chunk;
+            break;
         
         default:
             struct UNK Chunk;
@@ -929,7 +1128,6 @@ typedef struct
         
   
 } TChunk <read= ReadChunkName>;
-
 
 
 string ReadTString(TString& value )
@@ -957,9 +1155,16 @@ string ReadChunkNameIndex(u32& value )
 string ReadChunkNameSIndex(s32 & value )
 {
     local string str = "";
-    local string Name = CCSF.StringTable.Names.ChunkName[value].Data;
-    local int Index = value;
-    SPrintf(str, "%s (Index %d)", Name , Index);
+	if (value >= 0)
+	{
+		local string Name = CCSF.StringTable.Names.ChunkName[value].Data;
+		local int Index = value;
+		SPrintf(str, "%s (Index %d)", Name , Index);
+	}
+	else
+	{
+		SPrintf(str, "null");
+	}
 }
 
 string ReadChunkNameLookup(u8 & value )
@@ -1041,6 +1246,10 @@ string ReadAnmChunkType(AnimationTypes & value)
         case 0x1901:
             str = "MorphKeyframe";
         break;
+        
+        case 0x1902:
+            str = "MorpherController";
+        break;
 
         case 0x1A01:
             str = "OutlineFrame";
@@ -1053,7 +1262,28 @@ string ReadAnmChunkType(AnimationTypes & value)
         case 0x1D01:
             str = "FBSBlurFrame";
         break;
+    }
+    
+    return str;
+}
+
+string ReadPartGenChunkType(PartGeneratorTypes & value)
+{
+    local string str = "";
+
+    switch (value)
+    {
+        case 0xffff:
+            str = "0xFFFF";
+        break;
         
+        case 0x0000:
+            str = "0x0000";
+        break;
+        
+        case 0x00fd:
+            str = "0x00FD";
+        break;
     }
     
     return str;

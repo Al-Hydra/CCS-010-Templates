@@ -33,7 +33,14 @@ typedef struct
     {
         f32 Intensity;
     }
-}DistantLFrame; 
+}DistantLFrame;
+
+
+typedef struct
+{
+    u32 Index <read= ReadChunkNameIndex>;
+    u32 Data[Size - 1];
+}DistantLCtrl;
 
 
 typedef struct
@@ -112,16 +119,40 @@ typedef struct
 typedef struct
 {
     u32 Index <read= ReadChunkNameIndex>;
-    u32 Flags;
-    u32 TargetModel <read= ReadChunkNameIndex>;
-    u32 Unk;
+    u32 Count;
+    //u32 Flags;
+    //u32 TargetModel <read= ReadChunkNameIndex>;
+    //u32 Unk;
+    //u32 Frames;
     //u32 Frames;
     
+    //struct{
+    //    u32 Frame;
+    //    float Value;
+    //}MorphFCtrl[Frames];
+    
+    
     struct{
-        u32 Frame;
-        float Value;
-    }MorphFCtrl[Frames];
-
+        u32 MorphIndex;
+        u32 ctrlFlags;
+        
+        if ((ctrlFlags & 7) == 2) 
+        {
+            u32 frameCount;
+            
+            struct{
+                s32     key;
+                float   value;
+            }FrameValues[frameCount];
+        }
+        else if ((ctrlFlags & 7) == 1) 
+        {
+            float FrameValue;
+        }
+        
+    }MorphTarget[Count] <optimize=false>;
+    
+    //u8 data[(Size * 4) - 8];
     
 }MorphCtrl;
 
@@ -130,6 +161,8 @@ typedef struct
 {
     u32 Index <read= ReadChunkNameIndex>;
     u32 Flags;
+    //u16 Flags;
+    //u16 C;
     struct{
         AnmCtrlFloat(Flags);
     }OffsetX;
@@ -142,6 +175,23 @@ typedef struct
     struct{
         AnmCtrlFloat(Flags >> 9);
     }ScaleY;
+    
+    //Unknown
+    struct{
+        AnmCtrlFloat(Flags >> 12);
+    }OffsetA;
+    struct{
+        AnmCtrlFloat(Flags >> 15);
+    }OffsetB;
+    
+    //if (Size == 52)
+    //{
+    //    u8 data[(Size * 4) - 112];
+    //}
+    //if (Size == 36)
+    //{
+    //    u8 data[(Size * 4) - 80];
+    //}
     
 }MatCtrl;
 
@@ -359,7 +409,9 @@ void AnmCtrlFloat(u16 EntryType)
 {
     if ((EntryType & 7) == 2)
     {
-        u32 FrameCount;
+        u16 FrameCount;
+        u16 FrameCount00;
+        
         local int i;
         for (i = 0; i < FrameCount; i++)
         {

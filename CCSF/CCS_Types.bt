@@ -19,7 +19,7 @@ enum <u16> DataTypes
     StringTable             = 0x0002,
     Null                    = 0x0003,
     Stream                  = 0x0005,
-    Object                  = 0x0100,
+    Object                  = 0x0100, //Obj
     StreamObject            = 0x0101,
     Material                = 0x0200,
     Texture                 = 0x0300,
@@ -49,11 +49,12 @@ enum <u16> DataTypes
     StreamToneShadeParam    = 0x1C00,
     StreamFSBlurParam       = 0x1D00,
     Sprite2Tbl              = 0x1F00,
-    AnimationReference      = 0x2000, //obj2
+    AnimationReference      = 0x2000, //Obj2
     PCM_Audio               = 0x2200,
-    Dynamics                = 0x2300,
+    Dynamics                = 0x2300, //CmpDynamics
     Binary_Blob             = 0x2400,
     //Frame                   = 0xff01
+    
 };
 
 
@@ -72,6 +73,7 @@ enum <u8> TextureTypes
     Indexed8 = 0x13,
     Indexed4 = 0x14,
     DXT1 = 0x87,
+    DXT3 = 0x88,
     DXT5 = 0x89,
 };
 
@@ -89,7 +91,9 @@ enum <u16> AnimationTypes
     DistantLightFrame               = 0x0602,
     DirectionalLightController      = 0x0603,
     DirectLightFrame                = 0x0604,
+    //Unknow                        = 0x0605,
     SpotLightFrame                  = 0x0606,
+    //Unknow                        = 0x0607,
     OmniLightFrame                  = 0x0608,
     OmniLightController             = 0x0609,
     ModelVertexFrame                = 0x0802,
@@ -103,4 +107,46 @@ enum <u16> AnimationTypes
     FBSBlurFrame                    = 0x1d01,
     PCMFrame                        = 0x2201,
     Frame                           = 0xff01
+};
+
+
+enum <u16> PartGeneratorTypes
+{   
+    PartGenerator_ffff              = 0xffff,
+    PartGenerator_0000              = 0x0000,
+    PartGenerator_00fd              = 0x00fd
+    
+};
+
+enum <u16> PartAnmCtrlTypes
+{   
+    PartAnimationCtrl_0001              = 0x0001,
+    PartAnimationCtrl_0002              = 0x0002,
+    PartAnimationCtrl_0003              = 0x0003,
+    PartAnimationCtrl_0004              = 0x0004,
+    PartAnimationCtrl_0005              = 0x0005,
+    PartAnimationCtrl_0006              = 0x0006,
+    PartAnimationCtrl_0008              = 0x0008,
+    PartAnimationCtrl_0009              = 0x0009
+};
+
+enum <u16> PartAnmCtrlSubTypes
+{   
+    PartAnimationCtrl_000b              = 0x000b,   // 12
+    PartAnimationCtrl_0013              = 0x0013,   // 20
+    PartAnimationCtrl_0015              = 0x0015,   // 22
+    PartAnimationCtrl_001f              = 0x001f,   // 32
+    PartAnimationCtrl_0024              = 0x0024,   // 36
+    PartAnimationCtrl_0029              = 0x0029,
+    PartAnimationCtrl_002e              = 0x002e,
+    PartAnimationCtrl_0033              = 0x0033,
+    PartAnimationCtrl_0036              = 0x0036,
+    PartAnimationCtrl_003d              = 0x003d,
+    PartAnimationCtrl_003e              = 0x003e,
+    PartAnimationCtrl_0042              = 0x0042,
+    PartAnimationCtrl_0047              = 0x0047,
+    PartAnimationCtrl_0051              = 0x0051,
+    PartAnimationCtrl_005b              = 0x005b,
+    PartAnimationCtrl_0065              = 0x0065,
+    PartAnimationCtrl_00ab              = 0x00ab    // 172
 };

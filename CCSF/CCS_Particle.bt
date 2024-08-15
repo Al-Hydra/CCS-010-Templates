@@ -1,0 +1,222 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: CCS.bt
+//   Authors: HydraBladeZ
+//   Version: 1.00
+//   Purpose: Parse CCS files
+//  Category: 
+// File Mask: *.ccs
+//  ID Bytes: 46 53 43 43
+//   History: 
+//------------------------------------------------
+
+LittleEndian();
+
+//PartGenerator Chunk
+typedef struct
+{
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 A;
+    u32 Flags <format=hex>;
+    local int Flags0x00 <format=hex> = ((Flags >> 0x00) & 0xf);
+    local int Flags0x04 <format=hex> = ((Flags >> 0x04) & 0xf);
+    local int Flags0x08 <format=hex> = ((Flags >> 0x08) & 0xf);
+    local int Flags0x0c_NumElements  = ((Flags >> 0x0c) & 0xf);
+    local int Flags0x10_NumSubChunks = ((Flags >> 0x10) & 0xf);
+    local int Flags0x14 <format=hex> = ((Flags >> 0x14) & 0xf);
+    local int Flags0x18 <format=hex> = ((Flags >> 0x18) & 0xf);
+    local int Flags0x1c <format=hex> = ((Flags >> 0x1c) & 0xf);
+        local int Flags000 <format=hex> = ((Flags >> 0x14) & 0x1f); //tests
+    
+    local int PartGenSectionSize  = DataSize * 4;
+    local int StartPos = FTell();
+    local int EndPos = StartPos + (PartGenSectionSize - 12);
+    while (FTell() < EndPos)
+    {
+        struct
+        {
+            PartGeneratorTypes Type;
+            FSkip(2);
+            
+            switch (Type)
+            {
+                case PartGenerator_ffff:
+                    struct PartGen_ffff Genffff;
+                break;
+                
+                case PartGenerator_0000:
+                    struct PartGen_0000 Gen0000;
+                break;
+                
+                case PartGenerator_00fd:
+                    struct PartGen_00fd Gen00fd;
+                break;
+                
+                default:
+                    struct
+                        {
+                            u8 Data [EndPos - FTell()];
+                        }SUnknown;
+                break;
+            }
+        }PartGeneratorChunk <read = ReadPartGenChunkType(Type)>;
+    }
+}PGE;
+
+
+//PartAnmCtrl Chunk
+typedef struct
+{
+    u32 ChunkNameIndex <read=ReadChunkNameIndex>;
+    u32 AnimationIndex <read=ReadChunkNameIndex>;
+    
+    local int PartAnmCtrlSectionSize  = DataSize * 4;
+    local int StartPos = FTell();
+    local int EndPos = StartPos + (PartAnmCtrlSectionSize - 8);
+    while (FTell() < EndPos)
+    {
+        struct
+        {
+            PartAnmCtrlTypes Type;
+            FSkip(2);
+            
+            switch (Type)
+            {
+                case PartAnimationCtrl_0001:
+                    struct PartAnmCtrl_0001 PartAnmCtrl0001;
+                break;
+                
+                case PartAnimationCtrl_0002:
+                    struct PartAnmCtrl_0002 PartAnmCtrl0002;
+                break;
+                
+                case PartAnimationCtrl_0003:
+                    struct PartAnmCtrl_0003 PartAnmCtrl0003;
+                break;
+                
+                case PartAnimationCtrl_0004:
+                    struct PartAnmCtrl_0004 PartAnmCtrl0004;
+                break;
+                
+                case PartAnimationCtrl_0005:
+                    struct PartAnmCtrl_0005 PartAnmCtrl0005;
+                break;
+                
+                case PartAnimationCtrl_0006:
+                    struct PartAnmCtrl_0006 PartAnmCtrl0006;
+                break;
+                
+                case PartAnimationCtrl_0008:
+                    struct PartAnmCtrl_0008 PartAnmCtrl0008;
+                break;
+                
+                case PartAnimationCtrl_0009:
+                    struct PartAnmCtrl_0009 PartAnmCtrl0009;
+                break;
+                
+                /*default:
+                    Printf("Unknown PartAnmCtrl (%x) at %x\n", Type, FTell());
+                    struct
+                        {
+                            u8 Data [EndPos - FTell()];
+                        }SUnknown;
+                break;*/
+            }
+        }PartAnmCtrlChunk;
+    }
+    //u32 Data[(DataSize) - 19] <format=hex>;
+}PAC;
+
+typedef struct
+{
+    u32 PartGeneratorID <read=ReadChunkNameIndex>;
+    u32 ObjectIndex <read=ReadChunkNameIndex>;
+    u32 ObjectIndex <read=ReadChunkNameIndex>;
+    u32 A;
+    
+    struct
+    {
+        PartAnmCtrlSubTypes Type;
+        FSkip(2);
+        
+        switch (Type)
+        {
+            case PartAnimationCtrl_000b:
+                struct PartAnmCtrl_000b PartAnmCtrl000b;
+            break;
+                
+            case PartAnimationCtrl_0013:
+                struct PartAnmCtrl_0013 PartAnmCtrl0013;
+            break;
+                
+            case PartAnimationCtrl_0015:
+                struct PartAnmCtrl_0015 PartAnmCtrl0015;
+            break;
+                
+            case PartAnimationCtrl_001f:
+                struct PartAnmCtrl_001f PartAnmCtrl001f;
+            break;
+                
+            case PartAnimationCtrl_0024:
+                struct PartAnmCtrl_0024 PartAnmCtrl0024;
+            break;
+                
+            case PartAnimationCtrl_0029:
+                struct PartAnmCtrl_0029 PartAnmCtrl0029;
+            break;
+                
+            case PartAnimationCtrl_002e:
+                struct PartAnmCtrl_002e PartAnmCtrl002e;
+            break;
+                
+            case PartAnimationCtrl_0033:
+                struct PartAnmCtrl_0033 PartAnmCtrl0033;
+            break;
+                
+            case PartAnimationCtrl_0036:
+                struct PartAnmCtrl_0036 PartAnmCtrl0036;
+            break;
+                
+            case PartAnimationCtrl_003d:
+                struct PartAnmCtrl_003d PartAnmCtrl003d;
+            break;
+                
+            case PartAnimationCtrl_003e:
+                struct PartAnmCtrl_003e PartAnmCtrl003e;
+            break;
+                
+            case PartAnimationCtrl_0042:
+                struct PartAnmCtrl_0042 PartAnmCtrl0042;
+            break;
+                
+            case PartAnimationCtrl_0047:
+                struct PartAnmCtrl_0047 PartAnmCtrl0047;
+            break;
+                
+            case PartAnimationCtrl_0051:
+                struct PartAnmCtrl_0051 PartAnmCtrl0051;
+            break;
+                
+            case PartAnimationCtrl_005b:
+                struct PartAnmCtrl_005b PartAnmCtrl005b;
+            break;
+                
+            case PartAnimationCtrl_0065:
+                struct PartAnmCtrl_0065 PartAnmCtrl0065;
+             break;
+                
+            case PartAnimationCtrl_00ab:
+                struct PartAnmCtrl_00ab PartAnmCtrl00ab;
+             break;
+                
+            /*default:
+                Printf("Unknown PartAnmCtrl (%x) at %x\n", Type, FTell());
+                struct
+                {
+                    u8 Data [4];
+                }SUnknown;
+            break;*/
+        }
+    }PAC_sub_sub;
+}PAC_sub;

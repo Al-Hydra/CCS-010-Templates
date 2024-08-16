@@ -1,0 +1,507 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: CCS.bt
+//   Authors: HydraBladeZ, Dei
+//   Version: 1.00
+//   Purpose: Parse CCS files
+//  Category: 
+// File Mask: *.ccs
+//  ID Bytes: 46 53 43 43
+//   History: 
+//------------------------------------------------
+
+LittleEndian();
+
+///PartGenerator
+typedef struct{
+    s32 A_offsetInBuffer <format=hex>;           // 0x08
+    local int offsetInBuffer <format=hex> = (A_offsetInBuffer & 0xf0000); //tests
+    s16 PartLife;
+    s16 A_extraFlags;
+    float A;
+    float Velocity;
+    float A;
+    float A;
+    float A;
+    float A;
+    s32 A_typeHighExtra;
+    s16 A_additionalPropertiesLow;
+    s16 A_additionalPropertiesLow;
+    float A;
+    float A;
+    float A;
+    float A;
+    float A;
+    float AlphaMultiply;
+    float A;
+    u32 Element_EffectID <read=ReadChunkNameIndex>;
+    s16 A <format=hex>;
+    s16 A <format=hex>;
+}PartGen_ffff;
+
+typedef struct{
+    u32 Element_EffectID <read=ReadChunkNameIndex>;
+    s16 A <format=hex>;
+    s16 A <format=hex>;
+}PartGen_Extra; // 0x08
+
+typedef struct{
+    s32 A <format=hex>;         // 0x00
+    float PartScale_A <format=hex>;         // 0x06
+    float PartScale_B <format=hex>;         // 0x08
+    float PartScale_C <format=hex>;         // 0x0c
+    float A <format=hex>;         // 0x10
+    u32 Element_EffectID <read=ReadChunkNameIndex>; // 0x14
+    s16 A <format=hex>;         // 0x18
+    s16 A <format=hex>;         // 0x18
+    
+    if (EndPos - FTell() == 22 )
+    {
+        struct PartGen_Extra GenExtra00;
+        struct PartGen_Extra GenExtra01;
+        struct PartGen_Extra GenExtra02;
+    }
+    
+    if (EndPos - FTell() == 24 )
+    {
+        struct PartGen_Extra GenExtra;
+    }
+    
+    if (EndPos - FTell() == 16 )
+    {
+        struct PartGen_Extra GenExtra00;
+        struct PartGen_Extra GenExtra01;
+    }
+    
+    if (EndPos - FTell() == 8 )
+    {
+        struct PartGen_Extra GenExtra;
+    }
+}PartGen_0000; // 0x20
+
+typedef struct{
+    s32 A <format=hex>;                     // 0x00
+    s8  A_particleSubFlags <format=hex>;    // 0x04
+    s8  A_unknownField2 <format=hex>;       // 0x05
+    s16 A_descriptorFlagsHigh <format=hex>; // 0x06
+    s32 A_flagsLowExtra <format=hex>;       // 0x08
+    s32 A_flagsHighExtra;                   // 0x0c
+    s32 A_propertiesLowExtra <format=hex>;  // 0x10
+    u32 Element_EffectID <read=ReadChunkNameIndex>; // 0x14
+    s16 A_typeLowExtra <format=hex>;        // 0x18
+    s16 A_typeLowExtra1 <format=hex>;       // 0x18
+    
+    if (EndPos - FTell() == 22 )
+    {
+        struct PartGen_Extra GenExtra;
+    }
+    
+    if (EndPos - FTell() == 24 )
+    {
+        struct PartGen_Extra GenExtra;
+    }
+    
+    if (EndPos - FTell() == 16 )
+    {
+        struct PartGen_Extra GenExtra;
+    }
+    
+    if (EndPos - FTell() == 8 )
+    {
+        struct PartGen_Extra GenExtra;
+    }
+}PartGen_00fd; // 0x20
+
+
+///PartAnmCtrl
+typedef struct{
+    struct PAC_sub  PartAnmCtrl_Sub;
+}PartAnmCtrl_0001;
+
+typedef struct{
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+}PartAnmCtrl_0002;
+
+typedef struct{
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+}PartAnmCtrl_0003;
+
+typedef struct{
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+}PartAnmCtrl_0004;
+
+typedef struct{
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+}PartAnmCtrl_0005;
+
+typedef struct{
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+}PartAnmCtrl_0006;
+
+typedef struct{
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+}PartAnmCtrl_0008;
+
+typedef struct{
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+    struct PAC_sub  PartAnmCtrl_Sub;
+}PartAnmCtrl_0009;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_000b;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_0013;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_0015;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_001f;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_0024;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_0029;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_002e;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_0033;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_0036;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_003d;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_003e;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_0042;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_0047;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_0051;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_005b;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_0065;
+
+
+typedef struct{
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+    u32 A;
+}PartAnmCtrl_00ab;

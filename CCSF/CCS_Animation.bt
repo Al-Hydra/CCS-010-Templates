@@ -58,7 +58,7 @@ typedef struct
                     struct MorphFrame MorpherFrame;
                 break;
                 case MorpherController:
-                    struct MorphCtrl MorphController;
+                    struct MorphCtrl MorpherController;
                 break;
 
                 case NoteFrame:
@@ -75,6 +75,10 @@ typedef struct
                 
                 case DistantLightFrame:
                     struct DistantLFrame Distant;
+                break;
+                
+                case DistantLightController:
+                    struct DistantLCtrl DistantLController;
                 break;
 
                 case ShadowFrame:
@@ -109,7 +113,8 @@ typedef struct
                     Printf("Unknown Animation (%x) at %x\n", Type, FTell());
                     struct
                         {
-                            u8 Data [Size * 4];
+                            //u8 Data [Size * 4];
+                            u8 Data [EndPos - FTell()];
                         }SUnknown;
                 break;
             }
